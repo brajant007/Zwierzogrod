@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundacja Zwierzogród – Tam, gdzie życie ma własne tempo</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --black2: #111111;
+    --black3: #1a1a1a;
+    --gold: #c9a84c;
+    --gold-light: #e8c96a;
+    --gold-dim: #8a6f2e;
+    --white: #f5f0e8;
+    --white2: #ede7d9;
+    --gray: #888880;
+    --gray-light: #555550;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; width: 100%; z-index: 100;
+    padding: 1.2rem 4rem;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(to bottom, rgba(10,10,10,0.95), transparent);
+    backdrop-filter: blur(4px);
+  }
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.05em;
+    text-decoration: none;
+  }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    color: var(--white2);
+    text-decoration: none;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--gold); }
+  .nav-cta {
+    background: var(--gold);
+    color: var(--black) !important;
+    padding: 0.5rem 1.3rem;
+    font-weight: 600 !important;
+    transition: background 0.2s !important;
+  }
+  .nav-cta:hover { background: var(--gold-light) !important; color: var(--black) !important; }
+
+  /* ── HERO ── */
+  #hero {
+    min-height: 100vh;
+    display: flex; align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(135deg, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.4) 60%, rgba(10,10,10,0.7) 100%),
+      url('https://images.unsplash.com/photo-1500595046743-cd271d694e30?w=1800&q=80') center/cover no-repeat;
+  }
+  .hero-content {
+    position: relative; z-index: 2;
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 4rem;
+  }
+  .hero-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .hero-label::before {
+    content: '';
+    width: 40px; height: 1px;
+    background: var(--gold);
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 900;
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+    max-width: 700px;
+  }
+  .hero-title span { color: var(--gold); }
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--white2);
+    max-width: 500px;
+    margin-bottom: 3rem;
+    font-weight: 300;
+    opacity: 0.9;
+  }
+  .hero-buttons { display: flex; gap: 1rem; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--gold);
+    color: var(--black);
+    padding: 1rem 2.2rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--gold-light); transform: translateY(-2px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--white);
+    padding: 1rem 2.2rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    transition: border-color 0.2s, color 0.2s;
+    display: inline-block;
+  }
+  .btn-secondary:hover { border-color: var(--gold); color: var(--gold); }
+  .hero-scroll {
+    position: absolute; bottom: 2.5rem; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--gray); animation: bounce 2s infinite;
+  }
+  .hero-scroll::after {
+    content: '↓'; font-size: 1rem; color: var(--gold);
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(6px); }
+  }
+
+  /* ── SECTION SHARED ── */
+  section { padding: 7rem 4rem; }
+  .section-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.8rem;
+  }
+  .section-label::before {
+    content: '';
+    width: 25px; height: 1px; background: var(--gold);
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 1.5rem;
+  }
+  .section-title span { color: var(--gold); }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  /* ── O NAS ── */
+  #o-nas { background: var(--black2); }
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: center;
+    margin-top: 4rem;
+  }
+  .about-text p {
+    color: var(--white2);
+    margin-bottom: 1.2rem;
+    font-size: 1.05rem;
+    opacity: 0.85;
+  }
+  .about-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+  .stat {
+    border-left: 2px solid var(--gold);
+    padding-left: 1.2rem;
+  }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--gray);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin-top: 0.3rem;
+  }
+  .about-image {
+    position: relative;
+  }
+  .about-image img {
+    width: 100%;
+    aspect-ratio: 4/5;
+    object-fit: cover;
+    display: block;
+  }
+  .about-image::before {
+    content: '';
+    position: absolute;
+    top: -15px; left: -15px;
+    right: 15px; bottom: 15px;
+    border: 1px solid var(--gold-dim);
+    z-index: 0;
+  }
+  .about-image img { position: relative; z-index: 1; }
+
+  /* ── ZWIERZAKI ── */
+  #zwierzaki { background: var(--black); }
+  .animals-intro {
+    max-width: 600px;
+    margin-bottom: 4rem;
+  }
+  .animals-intro p { color: var(--white2); opacity: 0.8; margin-top: 1rem; }
+  .animals-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5px;
+    background: var(--gold-dim);
+  }
+  .animal-card {
+    background: var(--black3);
+    padding: 2rem 1.5rem;
+    transition: background 0.3s;
+    cursor: default;
+  }
+  .animal-card:hover { background: #1f1f1f; }
+  .animal-emoji { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+  .animal-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 0.3rem;
+  }
+  .animal-species {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--gray);
+    margin-bottom: 0.8rem;
+  }
+  .animal-desc {
+    font-size: 0.9rem;
+    color: var(--white2);
+    opacity: 0.75;
+    line-height: 1.6;
+  }
+
+  /* ── PROGRAMY ── */
+  #programy { background: var(--black2); }
+  .programs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    background: var(--gold-dim);
+    margin-top: 4rem;
+  }
+  .program-card {
+    background: var(--black3);
+    padding: 2.5rem 2rem;
+    transition: background 0.3s;
+  }
+  .program-card:hover { background: #1f1f1f; }
+  .program-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--gold-dim);
+    opacity: 0.4;
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .program-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--white);
+  }
+  .program-desc {
+    font-size: 0.9rem;
+    color: var(--white2);
+    opacity: 0.75;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+  .program-tag {
+    display: inline-block;
+    background: rgba(201,168,76,0.15);
+    color: var(--gold);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.8rem;
+    margin-right: 0.4rem;
+    margin-bottom: 0.4rem;
+  }
+
+  /* ── GRANTY ── */
+  #granty { background: var(--black); }
+  .grants-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 6rem;
+    align-items: start;
+    margin-top: 4rem;
+  }
+  .grants-text p {
+    color: var(--white2);
+    opacity: 0.8;
+    margin-bottom: 1.2rem;
+    font-size: 1rem;
+  }
+  .grants-list {
+    list-style: none;
+    margin-top: 2rem;
+  }
+  .grants-list li {
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(201,168,76,0.15);
+    font-size: 0.95rem;
+    color: var(--white2);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .grants-list li::before {
+    content: '→';
+    color: var(--gold);
+    font-size: 0.8rem;
+    flex-shrink: 0;
+  }
+  .grants-docs {
+    background: var(--black3);
+    padding: 2.5rem;
+    border-left: 3px solid var(--gold);
+  }
+  .grants-docs h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    margin-bottom: 1.5rem;
+    color: var(--gold);
+  }
+  .doc-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.9rem;
+    color: var(--white2);
+  }
+  .doc-icon {
+    width: 36px; height: 36px;
+    background: rgba(201,168,76,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    color: var(--gold);
+  }
+  .doc-name { font-weight: 500; }
+  .doc-meta { font-size: 0.75rem; color: var(--gray); }
+
+  /* ── WESPRZYJ ── */
+  #wesprzyj {
+    background: var(--black2);
+    text-align: center;
+  }
+  .support-content { max-width: 700px; margin: 0 auto; }
+  .support-content .section-label { justify-content: center; }
+  .support-content .section-label::before { display: none; }
+  .support-content p {
+    color: var(--white2);
+    opacity: 0.8;
+    margin: 1.5rem 0 3rem;
+    font-size: 1.05rem;
+  }
+  .support-box {
+    background: var(--black3);
+    border: 1px solid rgba(201,168,76,0.25);
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: left;
+  }
+  .support-box h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.85rem;
+  }
+  .account-number {
+    font-family: 'Inter', monospace;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--white);
+    letter-spacing: 0.05em;
+    background: rgba(201,168,76,0.08);
+    padding: 0.8rem 1.2rem;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+  .support-note {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-top: 0.5rem;
+  }
+  .support-amounts {
+    display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;
+    justify-content: center;
+  }
+  .amount-btn {
+    background: transparent;
+    border: 1px solid rgba(201,168,76,0.35);
+    color: var(--gold);
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .amount-btn:hover { background: var(--gold); color: var(--black); }
+
+  /* ── KONTAKT ── */
+  #kontakt { background: var(--black); }
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    margin-top: 4rem;
+    align-items: start;
+  }
+  .contact-info p {
+    color: var(--white2);
+    opacity: 0.8;
+    margin-bottom: 2rem;
+  }
+  .contact-item {
+    display: flex;
+    gap: 1.2rem;
+    margin-bottom: 1.5rem;
+    align-items: flex-start;
+  }
+  .contact-icon {
+    color: var(--gold);
+    font-size: 1rem;
+    margin-top: 0.1rem;
+    flex-shrink: 0;
+    width: 20px;
+  }
+  .contact-detail strong {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--gray);
+    margin-bottom: 0.2rem;
+  }
+  .contact-detail span { color: var(--white2); font-size: 0.95rem; }
+  .contact-form-area {
+    background: var(--black3);
+    padding: 2.5rem;
+  }
+  .contact-form-area h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    color: var(--white);
+  }
+  .form-group { margin-bottom: 1.2rem; }
+  .form-group label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--gray);
+    margin-bottom: 0.5rem;
+  }
+  .form-group input,
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    background: var(--black2);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--white);
+    padding: 0.8rem 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    border-color: var(--gold);
+  }
+  .form-group textarea { min-height: 120px; resize: vertical; }
+  .form-submit {
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    padding: 1rem 2rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+    margin-top: 0.5rem;
+  }
+  .form-submit:hover { background: var(--gold-light); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: #050505;
+    padding: 3rem 4rem;
+    border-top: 1px solid rgba(201,168,76,0.15);
+  }
+  .footer-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--gold);
+    font-weight: 700;
+  }
+  .footer-info {
+    font-size: 0.8rem;
+    color: var(--gray);
+    text-align: center;
+    line-height: 1.8;
+  }
+  .footer-links {
+    display: flex; gap: 2rem; list-style: none;
+  }
+  .footer-links a {
+    color: var(--gray);
+    text-decoration: none;
+    font-size: 0.8rem;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--gold); }
+
+  /* ── DIVIDER ── */
+  .gold-line {
+    width: 60px; height: 2px;
+    background: var(--gold);
+    margin: 2rem 0;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1024px) {
+    nav { padding: 1rem 2rem; }
+    section { padding: 5rem 2rem; }
+    .hero-content { padding: 0 2rem; }
+    .about-grid,
+    .grants-layout,
+    .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+    .animals-grid { grid-template-columns: repeat(2, 1fr); }
+    .programs-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .hero-title { font-size: 2.5rem; }
+    .animals-grid { grid-template-columns: 1fr 1fr; }
+    .programs-grid { grid-template-columns: 1fr; }
+    .about-stats { grid-template-columns: 1fr 1fr; }
+    footer { padding: 2rem; }
+    .footer-inner { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Zwierzogród</a>
+  <ul class="nav-links">
+    <li><a href="#o-nas">O fundacji</a></li>
+    <li><a href="#zwierzaki">Zwierzaki</a></li>
+    <li><a href="#programy">Programy</a></li>
+    <li><a href="#granty">Dla partnerów</a></li>
+    <li><a href="#wesprzyj" class="nav-cta">Wesprzyj</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-label">Fundacja Zwierzogród · Urbanie, Oborniki</div>
+    <h1 class="hero-title">Gdzie życie<br>ma <span>własne tempo</span></h1>
+    <p class="hero-subtitle">Łączymy miłość do zwierząt z nowoczesnym podejściem do edukacji, terapii i ochrony środowiska. Działamy dziś — myślimy o jutrze.</p>
+    <div class="hero-buttons">
+      <a href="#programy" class="btn-primary">Poznaj nasze projekty</a>
+      <a href="#wesprzyj" class="btn-secondary">Wesprzyj fundację</a>
+    </div>
+  </div>
+  <div class="hero-scroll">Przewiń</div>
+</section>
+
+<!-- O NAS -->
+<section id="o-nas">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-text">
+        <div class="section-label">O fundacji</div>
+        <h2 class="section-title">Fundacja z <span>misją</span> i charakterem</h2>
+        <div class="gold-line"></div>
+        <p>Fundacja Zwierzogród powstała w 2026 roku z połączenia dwóch pasji: miłości do zwierząt i wiary w nowoczesne, zrównoważone metody działania. Nie jesteśmy kolejnym schroniskiem — jesteśmy miejscem, gdzie zwierzęta, ludzie i technologia współistnieją w harmonii.</p>
+        <p>Naszą bazą jest zagroda w Urbanach koło Obornik — żywe centrum edukacji, terapii i odpoczynku. Tu mieszkają Kuba, Krysia, Bugs i ich przyjaciele. Tu dzieją się rzeczy.</p>
+        <p>Działamy na terenie całej Polski. Stawiamy na transparentność, innowacyjność i realne efekty — nie słowa.</p>
+        <div class="about-stats">
+          <div class="stat">
+            <div class="stat-num">12+</div>
+            <div class="stat-label">zwierzaków pod opieką</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">2026</div>
+            <div class="stat-label">rok założenia</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">5+</div>
+            <div class="stat-label">programów aktywnych</div>
+          </div>
+          <div class="stat">
+            <div class="stat-num">∞</div>
+            <div class="stat-label">serce do działania</div>
+          </div>
+        </div>
+      </div>
+      <div class="about-image">
+        <img src="https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=800&q=80" alt="Zagroda Zwierzogród">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ZWIERZAKI -->
+<section id="zwierzaki">
+  <div class="container">
+    <div class="animals-intro">
+      <div class="section-label">Mieszkańcy zagrody</div>
+      <h2 class="section-title">Poznaj <span>ekipę</span></h2>
+      <p>Każdy z nich ma swoją historię, charakter i fanów. To oni są sercem Zwierzogrodu.</p>
+    </div>
+    <div class="animals-grid">
+      <div class="animal-card">
+        <span class="animal-emoji">🐴</span>
+        <div class="animal-name">Kuba</div>
+        <div class="animal-species">Kucyk · Ikona zagrody</div>
+        <div class="animal-desc">Szef podwórka. Majestatyczny, dumny i doskonale wiedzący, że jest najważniejszy. Uwielbia marchewki i długie spacery. Terapeutyczny na 100%.</div>
+      </div>
+      <div class="animal-card">
+        <span class="animal-emoji">🐐</span>
+        <div class="animal-name">Krysia</div>
+        <div class="animal-species">Koza · Mistrzyni ucieczek</div>
+        <div class="animal-desc">Krysia ma IQ wyższe niż niejedna osoba. Potrafi otworzyć każdą bramkę, wejść wszędzie gdzie nie powinna i spojrzeć na Ciebie jakby to Twoja wina.</div>
+      </div>
+      <div class="animal-card">
+        <span class="animal-emoji">🐇</span>
+        <div class="animal-name">Bugs</div>
+        <div class="animal-species">Królik · Nieustający optymista</div>
+        <div class="animal-desc">Nazwany po legendarnym Bugsu Bunny — i nie bez powodu. Zawsze tam, gdzie coś się dzieje. Miękki jak chmurka, szybki jak myśl.</div>
+      </div>
+      <div class="animal-card">
+        <span class="animal-emoji">🐢</span>
+        <div class="animal-name">Ninja</div>
+        <div class="animal-species">Żółw · Mistrz zen</div>
+        <div class="animal-desc">Ninja nie spieszy się nigdzie — bo nigdzie mu się nie śpieszy. Żywy dowód na to, że powolność bywa mądrością. Ulubieniec medytujących.</div>
+      </div>
+      <div class="animal-card">
+        <span class="animal-emoji">🐓</span>
+        <div class="animal-name">Rocky</div>
+        <div class="animal-species">Kogut · Budzik zagrody</div>
+        <div class="animal-desc">Rocky traktuje swój poranny obowiązek z absolutną powagą. Budzi całą zagrodę o świcie bez wyjątków i bez przeprosin. Showman z krwi i kości.</div>
+      </div>
+      <div class="animal-card">
+        <span class="animal-emoji">🐟</span>
+        <div class="animal-name">Nemo, Shark & Karosek</div>
+        <div class="animal-species">Rybki · Trio spokoju</div>
+        <div class="animal-desc">Trzech przyjaciół ze stawku. Nemo jest odważny, Shark mroczny i tajemniczy, a Karosek — po prostu Karosek. Medytacyjna siła zagrody.</div>
+      </div>
+      <div class="animal-card">
+        <span class="animal-emoji">🐑</span>
+        <div class="animal-name">Wełna, Puch & Baranek</div>
+        <div class="animal-species">Owce · Stado filozofów</div>
+        <div class="animal-desc">Trójka owiec, które wyglądają jakby przez całe życie rozważały sens istnienia. Ciepłe, spokojne i niesamowicie dobre w terapii przez samo bycie.</div>
+      </div>
+      <div class="animal-card">
+        <span class="animal-emoji">🐱</span>
+        <div class="animal-name">Dach</div>
+        <div class="animal-species">Kot · CEO zagrody</div>
+        <div class="animal-desc">Oficjalnie nie należy do nikogo — ale de facto rządzi całą zagrodą z wysokości dachu. Obserwuje wszystkich. Ocenia. Rzadko schodzi. Zawsze ma rację.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRAMY -->
+<section id="programy">
+  <div class="container">
+    <div class="section-label">Co robimy</div>
+    <h2 class="section-title">Nasze <span>programy</span></h2>
+    <div class="programs-grid">
+      <div class="program-card">
+        <div class="program-number">01</div>
+        <div class="program-title">Animoterapia & Hipoterapia</div>
+        <div class="program-desc">Terapia z udziałem zwierząt dla dzieci, młodzieży, osób z niepełnosprawnościami i seniorów. Kuba i Krysia robią robotę, której żaden lek nie zastąpi.</div>
+        <span class="program-tag">Dzieci</span>
+        <span class="program-tag">Seniorzy</span>
+        <span class="program-tag">Niepełnosprawność</span>
+      </div>
+      <div class="program-card">
+        <div class="program-number">02</div>
+        <div class="program-title">EkoZagroda – OZE i Edukacja</div>
+        <div class="program-desc">Rozwijamy zagrodę jako wzorcowy obiekt zasilany w pełni z odnawialnych źródeł energii. Panele, biogaz, systemy smart — i wszystko pokazujemy dzieciom na żywo.</div>
+        <span class="program-tag">OZE</span>
+        <span class="program-tag">Smart Tech</span>
+        <span class="program-tag">Edukacja</span>
+      </div>
+      <div class="program-card">
+        <div class="program-number">03</div>
+        <div class="program-title">Warsztaty dla Szkół</div>
+        <div class="program-desc">Programy edukacyjne dla szkół podstawowych i średnich. Biologia, ekologia i empatia w praktyce — bo żadna prezentacja PowerPoint nie zastąpi żywego kontaktu z naturą.</div>
+        <span class="program-tag">Szkoły</span>
+        <span class="program-tag">Wycieczki</span>
+        <span class="program-tag">Warsztaty</span>
+      </div>
+      <div class="program-card">
+        <div class="program-number">04</div>
+        <div class="program-title">Wirtualna Adopcja</div>
+        <div class="program-desc">Nie możesz zabrać Kuby do domu? Adoptuj go wirtualnie. Miesięczne wsparcie = regularne zdjęcia, aktualizacje i poczucie że jesteś częścią stada.</div>
+        <span class="program-tag">Online</span>
+        <span class="program-tag">Darowizny</span>
+        <span class="program-tag">Społeczność</span>
+      </div>
+      <div class="program-card">
+        <div class="program-number">05</div>
+        <div class="program-title">Wolontariat & Integracja</div>
+        <div class="program-desc">Otwieramy zagrodę dla wolontariuszy, grup integracyjnych i firm w ramach CSR. Praca przy zwierzakach resetuje lepiej niż jakikolwiek team building.</div>
+        <span class="program-tag">CSR</span>
+        <span class="program-tag">Wolontariat</span>
+        <span class="program-tag">Integracja</span>
+      </div>
+      <div class="program-card">
+        <div class="program-number">06</div>
+        <div class="program-title">Azyl & Rehabilitacja</div>
+        <div class="program-desc">Przyjmujemy zwierzęta potrzebujące pomocy, rehabilitujemy je i szukamy dla nich nowych domów. Działamy zgodnie z najwyższymi standardami opieki weterynaryjnej.</div>
+        <span class="program-tag">Adopcje</span>
+        <span class="program-tag">Rehabilitacja</span>
+        <span class="program-tag">Ochrona</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GRANTY -->
+<section id="granty">
+  <div class="container">
+    <div class="section-label">Dla partnerów i instytucji</div>
+    <h2 class="section-title">Transparentność<br>to nasz <span>standard</span></h2>
+    <div class="grants-layout">
+      <div class="grants-text">
+        <p>Fundacja Zwierzogród działa w oparciu o pełną transparentność finansową i merytoryczną. Jesteśmy gotowi do współpracy z instytucjami publicznymi, samorządami, funduszami europejskimi i partnerami prywatnymi.</p>
+        <p>Nasze projekty łączą obszary ochrony środowiska, edukacji, terapii i innowacji — co pozwala nam aplikować o dofinansowania z wielu różnych źródeł.</p>
+        <ul class="grants-list">
+          <li>Fundusze europejskie — programy rolno-środowiskowe i społeczne</li>
+          <li>Granty krajowe — FIO, PFRON, programy ministerialne</li>
+          <li>Samorządy lokalne — Oborniki, Wielkopolska</li>
+          <li>Programy OZE i transformacji energetycznej</li>
+          <li>Partnerstwa z firmami (CSR, sponsoring)</li>
+          <li>Zbiórki publiczne i darowizny od osób prywatnych</li>
+        </ul>
+        <div style="margin-top: 2.5rem;">
+          <a href="#kontakt" class="btn-primary">Nawiąż współpracę</a>
+        </div>
+      </div>
+      <div class="grants-docs">
+        <h3>Dokumenty fundacji</h3>
+        <div class="doc-item">
+          <div class="doc-icon">📄</div>
+          <div>
+            <div class="doc-name">Statut Fundacji Zwierzogród</div>
+            <div class="doc-meta">Dokument założycielski · 2 kwietnia 2026</div>
+          </div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">📋</div>
+          <div>
+            <div class="doc-name">Akt Fundacyjny</div>
+            <div class="doc-meta">Urbanie · 2 kwietnia 2026</div>
+          </div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">🏛️</div>
+          <div>
+            <div class="doc-name">Siedziba fundacji</div>
+            <div class="doc-meta">Urbanie 13, 64-600 Oborniki</div>
+          </div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">👤</div>
+          <div>
+            <div class="doc-name">Fundator & Prezes Zarządu</div>
+            <div class="doc-meta">Mateusz Janus</div>
+          </div>
+        </div>
+        <div class="doc-item">
+          <div class="doc-icon">📧</div>
+          <div>
+            <div class="doc-name">Kontakt instytucjonalny</div>
+            <div class="doc-meta">fundacja@zwierzogrod.eu</div>
+          </div>
+        </div>
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid rgba(201,168,76,0.2);">
+          <p style="font-size:0.8rem; color: var(--gray); line-height:1.7;">Fundacja działa na podstawie ustawy z dnia 6 kwietnia 1984 r. o fundacjach. Pełna dokumentacja dostępna na żądanie.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WESPRZYJ -->
+<section id="wesprzyj">
+  <div class="container">
+    <div class="support-content">
+      <div class="section-label">Wesprzyj nas</div>
+      <h2 class="section-title">Każda złotówka<br>trafia do <span>zwierzaków</span></h2>
+      <p>Twoje wsparcie pozwala nam kupować paszę, opłacać weterynarzy, rozwijać programy edukacyjne i budować nowoczesną, ekologiczną zagrodę. Żadnych pośredników. Żadnych ukrytych kosztów.</p>
+      <div class="support-box">
+        <h3>Przelew bankowy / BLIK</h3>
+        <div class="account-number">52 1870 1045 2078 1091 0298 0001</div>
+        <div class="support-note">Fundacja Zwierzogród · Urbanie 13, 64-600 Oborniki</div>
+        <div class="support-note" style="margin-top:0.3rem;">W tytule wpisz: <em>Darowizna na cele statutowe</em></div>
+        <div class="support-note" style="margin-top:0.5rem; color: var(--gold); opacity:0.8;">💡 BLIK: w aplikacji bankowej → Przelew → wpisz numer konta powyżej</div>
+      </div>
+      <div class="support-amounts">
+        <button class="amount-btn">20 zł / miesiąc</button>
+        <button class="amount-btn">50 zł / miesiąc</button>
+        <button class="amount-btn">100 zł / miesiąc</button>
+        <button class="amount-btn">Własna kwota</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- KONTAKT -->
+<section id="kontakt">
+  <div class="container">
+    <div class="section-label">Kontakt</div>
+    <h2 class="section-title">Porozmawiajmy</h2>
+    <div class="contact-grid">
+      <div class="contact-info">
+        <p>Masz pytanie? Chcesz nawiązać współpracę, zorganizować wizytę z grupą, zaproponować projekt? Napisz — odpowiadamy szybko.</p>
+        <div class="contact-item">
+          <div class="contact-icon">📍</div>
+          <div class="contact-detail">
+            <strong>Adres</strong>
+            <span>Urbanie 13, 64-600 Oborniki<br>woj. wielkopolskie</span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">✉️</div>
+          <div class="contact-detail">
+            <strong>E-mail</strong>
+            <span>fundacja@zwierzogrod.eu</span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">🌐</div>
+          <div class="contact-detail">
+            <strong>Strona</strong>
+            <span>zwierzogrod.eu</span>
+          </div>
+        </div>
+        <div class="contact-item">
+          <div class="contact-icon">🕐</div>
+          <div class="contact-detail">
+            <strong>Godziny wizyt</strong>
+            <span>Po wcześniejszym umówieniu</span>
+          </div>
+        </div>
+      </div>
+      <div class="contact-form-area">
+        <h3>Napisz do nas</h3>
+        <div class="form-group">
+          <label>Imię i nazwisko</label>
+          <input type="text" placeholder="Jan Kowalski">
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" placeholder="jan@przykład.pl">
+        </div>
+        <div class="form-group">
+          <label>Temat</label>
+          <select>
+            <option>Wolontariat</option>
+            <option>Współpraca instytucjonalna</option>
+            <option>Warsztaty i wizyty</option>
+            <option>Darowizna</option>
+            <option>Inne</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Wiadomość</label>
+          <textarea placeholder="Napisz kilka słów..."></textarea>
+        </div>
+        <button class="form-submit">Wyślij wiadomość →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">Zwierzogród</div>
+    <div class="footer-info">
+      Fundacja Zwierzogród · Urbanie 13, 64-600 Oborniki<br>
+      fundacja@zwierzogrod.eu · zwierzogrod.eu<br>
+      © 2026 Fundacja Zwierzogród. Wszelkie prawa zastrzeżone.
+    </div>
+    <ul class="footer-links">
+      <li><a href="#o-nas">O nas</a></li>
+      <li><a href="#programy">Programy</a></li>
+      <li><a href="#granty">Partnerzy</a></li>
+      <li><a href="#kontakt">Kontakt</a></li>
+    </ul>
+  </div>
+</footer>
+
+</body>
+</html>
