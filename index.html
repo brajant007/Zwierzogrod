@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fundacja Zwierzogród – Smart Sanctuary · AI · OZE</title>
+<meta name="description" content="Fundacja Zwierzogród – pierwsze smart sanctuary w Polsce. Projekty AI, OZE i nowych technologii służących zwierzętom i edukacji. KRS 0001241870.">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --black:#050508;--black2:#0a0a0f;--black3:#0f0f18;--black4:#141420;
+  --green:#00ff88;--green-dim:#00cc6a;--green-dark:#003322;--green-glow:rgba(0,255,136,0.12);
+  --white:#e8f0e8;--white2:#a0b0a0;--gray:#4a5a4a;
+  --mono:'Space Mono',monospace;--sans:'Space Grotesk',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--black);color:var(--white);font-family:var(--sans);font-weight:300;line-height:1.7;overflow-x:hidden;}
+
+/* SCANLINE overlay */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,255,136,0.015) 2px,rgba(0,255,136,0.015) 4px);pointer-events:none;z-index:9998;}
+
+/* COOKIE */
+#cookie-banner{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:var(--black2);border-top:1px solid var(--green-dim);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;}
+#cookie-banner p{font-size:0.78rem;color:var(--white2);max-width:650px;font-family:var(--mono);}
+#cookie-banner a{color:var(--green);text-decoration:none;cursor:pointer;}
+.cookie-btns{display:flex;gap:0.7rem;}
+.btn-ca{background:var(--green);color:#000;border:none;padding:0.5rem 1.3rem;font-family:var(--mono);font-size:0.75rem;font-weight:700;letter-spacing:0.06em;cursor:pointer;text-transform:uppercase;}
+.btn-cr{background:transparent;color:var(--gray);border:1px solid var(--gray);padding:0.5rem 1rem;font-family:var(--mono);font-size:0.75rem;cursor:pointer;text-transform:uppercase;}
+
+/* PRIVACY */
+#privacy-page{display:none;position:fixed;inset:0;z-index:9000;background:var(--black);overflow-y:auto;padding:5rem 2rem;}
+#privacy-page.active{display:block;}
+.pp{max-width:800px;margin:0 auto;}
+.pp h1{font-family:var(--mono);font-size:1.8rem;color:var(--green);margin-bottom:2rem;}
+.pp h2{font-family:var(--mono);font-size:1rem;color:var(--white);margin:2rem 0 0.7rem;text-transform:uppercase;letter-spacing:0.1em;}
+.pp p,.pp li{color:var(--white2);font-size:0.88rem;line-height:1.8;}
+.pp ul{padding-left:1.5rem;margin-bottom:1rem;}
+.pp-back{display:inline-flex;align-items:center;gap:0.5rem;background:transparent;border:1px solid var(--green-dim);color:var(--green);padding:0.6rem 1.2rem;font-family:var(--mono);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-bottom:3rem;}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:100;padding:1rem 3rem;display:flex;justify-content:space-between;align-items:center;transition:background .3s;}
+nav.scrolled{background:rgba(5,5,8,0.97);backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,255,136,0.1);}
+.nav-logo{display:flex;align-items:center;gap:0.8rem;text-decoration:none;}
+.nav-logo-mark{width:32px;height:32px;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.65rem;font-weight:700;color:var(--green);letter-spacing:0.05em;position:relative;}
+.nav-logo-mark::before{content:'';position:absolute;top:2px;left:2px;right:2px;bottom:2px;border:1px solid rgba(0,255,136,0.2);}
+.nav-logo-text{font-family:var(--mono);font-size:0.9rem;font-weight:700;color:var(--white);letter-spacing:0.08em;text-transform:uppercase;}
+.nav-logo-text span{color:var(--green);}
+.nav-links{display:flex;gap:2rem;list-style:none;align-items:center;}
+.nav-links a{color:var(--white2);text-decoration:none;font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;font-family:var(--mono);transition:color .2s;position:relative;}
+.nav-links a::after{content:'';position:absolute;bottom:-3px;left:0;right:0;height:1px;background:var(--green);transform:scaleX(0);transition:transform .2s;}
+.nav-links a:hover{color:var(--green);}
+.nav-links a:hover::after{transform:scaleX(1);}
+.nav-cta{border:1px solid var(--green)!important;color:var(--green)!important;padding:0.4rem 1rem;}
+.nav-cta:hover{background:var(--green-glow)!important;}
+.nav-ham{display:none;flex-direction:column;gap:5px;cursor:pointer;}
+.nav-ham span{width:22px;height:1.5px;background:var(--white);display:block;}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;background:var(--black);}
+.hero-grid-bg{position:absolute;inset:0;background-image:linear-gradient(rgba(0,255,136,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.04) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%);}
+.hero-glow{position:absolute;top:30%;left:55%;width:600px;height:600px;background:radial-gradient(circle,rgba(0,255,136,0.08) 0%,transparent 70%);transform:translate(-50%,-50%);pointer-events:none;}
+.hero-content{position:relative;z-index:2;max-width:1200px;margin:0 auto;padding:0 3rem;padding-top:5rem;}
+.hero-tag{display:inline-flex;align-items:center;gap:0.6rem;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--green);margin-bottom:2rem;border:1px solid rgba(0,255,136,0.25);padding:0.35rem 0.9rem;}
+.hero-tag::before{content:'▶';font-size:0.5rem;}
+.hero-title{font-family:var(--mono);font-size:clamp(2.5rem,5.5vw,4.8rem);font-weight:700;line-height:1.05;letter-spacing:-0.02em;margin-bottom:0.5rem;}
+.hero-title .green{color:var(--green);}
+.hero-title .dim{color:var(--gray);}
+.hero-sub-title{font-family:var(--sans);font-size:clamp(1rem,2vw,1.4rem);font-weight:300;color:var(--white2);margin-bottom:2rem;max-width:600px;line-height:1.5;}
+.hero-sub-title span{color:var(--green);}
+.hero-desc{font-size:0.92rem;color:var(--white2);max-width:500px;margin-bottom:3rem;opacity:0.8;line-height:1.7;}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap;}
+.btn-p{background:var(--green);color:#000;padding:0.85rem 2rem;font-family:var(--mono);font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;display:inline-block;transition:all .2s;}
+.btn-p:hover{background:#00ffaa;transform:translateY(-2px);}
+.btn-g{background:transparent;color:var(--green);padding:0.85rem 2rem;font-family:var(--mono);font-size:0.75rem;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;display:inline-block;border:1px solid rgba(0,255,136,0.4);transition:all .2s;}
+.btn-g:hover{background:var(--green-glow);border-color:var(--green);}
+.hero-stats{display:flex;gap:3rem;margin-top:4rem;padding-top:3rem;border-top:1px solid rgba(0,255,136,0.1);}
+.hs{display:flex;flex-direction:column;}
+.hs-num{font-family:var(--mono);font-size:2rem;font-weight:700;color:var(--green);line-height:1;}
+.hs-label{font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--gray);margin-top:0.3rem;}
+.hero-krs{position:absolute;bottom:2.5rem;right:3rem;font-family:var(--mono);font-size:0.62rem;letter-spacing:0.1em;color:var(--gray);text-align:right;line-height:2;}
+.hero-krs span{color:rgba(0,255,136,0.5);}
+.hero-cursor{display:inline-block;width:3px;height:1em;background:var(--green);margin-left:4px;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+
+/* TICKER */
+.ticker-wrap{background:transparent;border-top:1px solid rgba(0,255,136,0.15);border-bottom:1px solid rgba(0,255,136,0.15);padding:0.6rem 0;overflow:hidden;white-space:nowrap;}
+.ticker-inner{display:inline-flex;animation:tick 40s linear infinite;}
+.ticker-item{font-family:var(--mono);font-size:0.68rem;font-weight:400;letter-spacing:0.15em;text-transform:uppercase;color:var(--green-dim);padding:0 2rem;}
+.ticker-dot{color:rgba(0,255,136,0.3);}
+@keyframes tick{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+
+/* SHARED */
+.container{max-width:1200px;margin:0 auto;}
+section{padding:7rem 3rem;}
+.eyebrow{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.25em;text-transform:uppercase;color:var(--green);margin-bottom:1.2rem;display:flex;align-items:center;gap:0.8rem;}
+.eyebrow::before{content:'//';color:rgba(0,255,136,0.4);}
+.stitle{font-family:var(--mono);font-size:clamp(1.7rem,3.5vw,2.7rem);font-weight:700;line-height:1.1;margin-bottom:1.5rem;letter-spacing:-0.01em;}
+.stitle em{font-style:normal;color:var(--green);}
+.green-rule{width:40px;height:1px;background:var(--green);margin:1.5rem 0;opacity:0.6;}
+
+/* O NAS */
+#o-nas{background:var(--black2);}
+.about-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:5rem;align-items:center;margin-top:4rem;}
+.about-text p{color:var(--white2);margin-bottom:1.1rem;font-size:0.95rem;opacity:0.85;line-height:1.75;}
+.about-tech-list{margin-top:2rem;display:flex;flex-direction:column;gap:0.6rem;}
+.atl-item{display:flex;align-items:center;gap:0.8rem;font-family:var(--mono);font-size:0.78rem;color:var(--white2);}
+.atl-item::before{content:'→';color:var(--green);flex-shrink:0;}
+.about-visual{position:relative;}
+.about-terminal{background:var(--black3);border:1px solid rgba(0,255,136,0.2);padding:1.5rem;}
+.at-header{display:flex;align-items:center;gap:0.5rem;margin-bottom:1.2rem;padding-bottom:0.8rem;border-bottom:1px solid rgba(0,255,136,0.1);}
+.at-dot{width:8px;height:8px;border-radius:50%;}
+.at-title{font-family:var(--mono);font-size:0.65rem;color:var(--gray);letter-spacing:0.1em;margin-left:auto;}
+.at-line{font-family:var(--mono);font-size:0.78rem;line-height:2;color:var(--white2);}
+.at-line .cmd{color:var(--green);}
+.at-line .val{color:#88ddff;}
+.at-line .com{color:var(--gray);}
+.at-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(0,255,136,0.1);margin-top:1.5rem;}
+.at-stat{background:var(--black3);padding:1rem;text-align:center;}
+.at-stat-num{font-family:var(--mono);font-size:1.6rem;font-weight:700;color:var(--green);}
+.at-stat-label{font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--gray);margin-top:0.2rem;}
+
+/* PROJEKTY AI */
+#projekty{background:var(--black);}
+.proj-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:rgba(0,255,136,0.08);margin-top:4rem;}
+.pj{background:var(--black2);padding:2.5rem;transition:background .3s;position:relative;overflow:hidden;}
+.pj::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--green),transparent);transform:scaleX(0);transition:transform .4s;}
+.pj:hover{background:var(--black3);}
+.pj:hover::before{transform:scaleX(1);}
+.pj-id{font-family:var(--mono);font-size:0.62rem;color:rgba(0,255,136,0.4);letter-spacing:0.2em;margin-bottom:1rem;}
+.pj-title{font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--white);margin-bottom:0.8rem;}
+.pj-desc{font-size:0.88rem;color:var(--white2);opacity:0.75;line-height:1.7;margin-bottom:1.5rem;}
+.pj-tags{display:flex;flex-wrap:wrap;gap:0.4rem;}
+.tag{background:rgba(0,255,136,0.06);color:var(--green-dim);font-family:var(--mono);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;padding:0.22rem 0.65rem;border:1px solid rgba(0,255,136,0.15);}
+.pj-status{display:inline-flex;align-items:center;gap:0.4rem;font-family:var(--mono);font-size:0.65rem;color:var(--green);margin-top:1.2rem;}
+.pj-status::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* ZWIERZAKI */
+#zwierzaki{background:var(--black3);}
+.animals-hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:3rem;flex-wrap:wrap;gap:1.5rem;}
+.animals-hdr p{color:var(--white2);opacity:0.7;max-width:380px;font-size:0.88rem;}
+.animals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(0,255,136,0.06);}
+.ac{background:var(--black2);padding:1.6rem 1.3rem;transition:background .3s;position:relative;}
+.ac::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:var(--green);transform:scaleX(0);transform-origin:left;transition:transform .3s;}
+.ac:hover{background:var(--black4);}
+.ac:hover::after{transform:scaleX(1);}
+.ac-emoji{font-size:1.8rem;margin-bottom:0.7rem;display:block;}
+.ac-name{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--green);margin-bottom:0.2rem;}
+.ac-sp{font-family:var(--mono);font-size:0.6rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--gray);margin-bottom:0.6rem;}
+.ac-desc{font-size:0.82rem;color:var(--white2);opacity:0.7;line-height:1.6;}
+
+/* TECH */
+#tech{background:var(--black2);}
+.tech-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(0,255,136,0.08);margin-top:4rem;}
+.tc{background:var(--black);padding:2rem 1.8rem;transition:background .3s;}
+.tc:hover{background:var(--black3);}
+.tc-icon{font-size:1.6rem;margin-bottom:1rem;}
+.tc-title{font-family:var(--mono);font-size:0.95rem;font-weight:700;color:var(--white);margin-bottom:0.6rem;}
+.tc-desc{font-size:0.84rem;color:var(--white2);opacity:0.7;line-height:1.65;}
+
+/* WESPRZYJ */
+#wesprzyj{background:var(--black);}
+.sup-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;margin-top:4rem;}
+.sup-text p{color:var(--white2);opacity:0.8;margin-bottom:1rem;font-size:0.92rem;}
+.amounts{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:1.8rem;}
+.ap{background:transparent;border:1px solid rgba(0,255,136,0.25);color:var(--green-dim);padding:0.5rem 1.2rem;font-family:var(--mono);font-size:0.78rem;cursor:pointer;transition:all .2s;text-transform:uppercase;letter-spacing:0.08em;}
+.ap:hover,.ap.active{background:var(--green);color:#000;border-color:var(--green);}
+.sup-box{background:var(--black2);border:1px solid rgba(0,255,136,0.2);padding:2.2rem;}
+.sup-lbl{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--green);margin-bottom:0.9rem;}
+.acc-num{font-family:var(--mono);font-size:0.95rem;font-weight:700;background:var(--black3);padding:0.85rem 1rem;display:block;letter-spacing:0.04em;color:var(--white);margin-bottom:0.6rem;border-left:2px solid var(--green);}
+.sup-meta{font-family:var(--mono);font-size:0.72rem;color:var(--gray);line-height:2;margin-top:0.4rem;}
+.sup-meta strong{color:var(--white2);}
+.blik{margin-top:1.1rem;padding:0.75rem 0.9rem;background:rgba(0,255,136,0.04);border:1px solid rgba(0,255,136,0.12);font-family:var(--mono);font-size:0.74rem;color:var(--white2);line-height:1.7;}
+.blik strong{color:var(--green);}
+
+/* DANE */
+#dane{background:var(--black2);padding:5rem 3rem;}
+.dane-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(0,255,136,0.08);margin-top:3rem;}
+.dc{background:var(--black3);padding:1.5rem;}
+.dc-lbl{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--gray);margin-bottom:0.4rem;}
+.dc-val{font-family:var(--mono);font-size:0.88rem;font-weight:500;color:var(--white);}
+.dc-val.green{color:var(--green);}
+
+/* KONTAKT */
+#kontakt{background:var(--black);}
+.con-grid{display:grid;grid-template-columns:1fr 1.1fr;gap:5rem;margin-top:4rem;}
+.con-info p{color:var(--white2);opacity:0.8;margin-bottom:2.2rem;font-size:0.92rem;}
+.ci{display:flex;gap:1rem;margin-bottom:1.3rem;}
+.ci-icon{color:var(--green);font-family:var(--mono);font-size:0.75rem;flex-shrink:0;margin-top:0.1rem;width:16px;}
+.ci strong{display:block;font-family:var(--mono);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--gray);margin-bottom:0.15rem;}
+.ci span{color:var(--white2);font-size:0.88rem;}
+.con-form{background:var(--black2);border:1px solid rgba(0,255,136,0.12);padding:2.2rem;}
+.con-form h3{font-family:var(--mono);font-size:1.1rem;font-weight:700;margin-bottom:1.8rem;color:var(--green);}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;}
+.fg{margin-bottom:0.9rem;}
+.fg label{display:block;font-family:var(--mono);font-size:0.62rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--gray);margin-bottom:0.35rem;}
+.fg input,.fg textarea,.fg select{width:100%;background:var(--black3);border:1px solid rgba(255,255,255,0.06);color:var(--white);padding:0.7rem 0.9rem;font-family:var(--mono);font-size:0.82rem;outline:none;transition:border-color .2s;appearance:none;}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--green);}
+.fg textarea{min-height:100px;resize:vertical;}
+.fsub{width:100%;background:var(--green);color:#000;border:none;padding:0.9rem;font-family:var(--mono);font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:background .2s;margin-top:0.4rem;}
+.fsub:hover{background:#00ffaa;}
+
+/* FOOTER */
+footer{background:#030306;padding:2.5rem 3rem;border-top:1px solid rgba(0,255,136,0.1);}
+.fi{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:2rem;}
+.fl{display:flex;align-items:center;gap:0.8rem;}
+.fl-mark{width:28px;height:28px;border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.6rem;font-weight:700;color:var(--green);}
+.fl-text{font-family:var(--mono);font-size:0.85rem;font-weight:700;color:var(--white);text-transform:uppercase;letter-spacing:0.08em;}
+.fl-text span{color:var(--green);}
+.fc{text-align:center;font-family:var(--mono);font-size:0.68rem;color:var(--gray);line-height:2;}
+.fc a{color:rgba(0,255,136,0.5);text-decoration:none;cursor:pointer;}
+.fc a:hover{color:var(--green);}
+.flinks{display:flex;gap:1.4rem;justify-content:flex-end;list-style:none;}
+.flinks a{color:var(--gray);text-decoration:none;font-family:var(--mono);font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;transition:color .2s;}
+.flinks a:hover{color:var(--green);}
+
+/* RESPONSIVE */
+@media(max-width:1024px){nav{padding:1rem 1.5rem;}section{padding:5rem 1.5rem;}#dane,#logo-sec{padding:4rem 1.5rem;}.hero-content{padding:0 1.5rem;padding-top:5rem;}.about-grid,.sup-grid,.con-grid{grid-template-columns:1fr;gap:3rem;}.animals-grid{grid-template-columns:repeat(2,1fr);}.proj-grid{grid-template-columns:1fr;}.tech-grid{grid-template-columns:1fr 1fr;}.dane-grid{grid-template-columns:repeat(2,1fr);}.fi{grid-template-columns:1fr;text-align:center;}.flinks{justify-content:center;}.hero-krs{display:none;}.hero-stats{flex-wrap:wrap;gap:2rem;}}
+@media(max-width:768px){.nav-links{display:none;}.nav-ham{display:flex;}.animals-grid{grid-template-columns:1fr 1fr;}.tech-grid{grid-template-columns:1fr;}.dane-grid{grid-template-columns:1fr 1fr;}.fr{grid-template-columns:1fr;}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+
+<!-- COOKIE -->
+<div id="cookie-banner">
+  <p>// Ta strona używa Google Fonts. Więcej w <a onclick="showPP()">polityce_prywatności.md</a></p>
+  <div class="cookie-btns">
+    <button class="btn-cr" onclick="closeCookie()">reject()</button>
+    <button class="btn-ca" onclick="closeCookie()">accept()</button>
+  </div>
+</div>
+
+<!-- PRIVACY -->
+<div id="privacy-page">
+  <div class="pp">
+    <button class="pp-back" onclick="hidePP()">← back()</button>
+    <h1>// polityka_prywatności</h1>
+    <p>Fundacja Zwierzogród (KRS 0001241870, NIP 6060123206) przetwarza dane zgodnie z RODO.</p>
+    <h2>// administrator</h2>
+    <p>Fundacja Zwierzogród, Urbanie 13, 64-600 Oborniki. Prezes: Mateusz Janus. Email: fundacja@zwierzogrod.eu</p>
+    <h2>// zbierane_dane</h2>
+    <p>Wyłącznie dane z formularza kontaktowego: imię, nazwisko, e-mail, treść wiadomości.</p>
+    <h2>// cel_przetwarzania</h2>
+    <ul>
+      <li>Odpowiedź na zapytanie – art. 6 ust. 1 lit. f RODO</li>
+      <li>Realizacja darowizn – art. 6 ust. 1 lit. b RODO</li>
+    </ul>
+    <h2>// cookies_i_google_fonts</h2>
+    <p>Strona ładuje czcionki z serwerów Google. Nie używamy własnych plików śledzących ani analitycznych.</p>
+    <h2>// twoje_prawa</h2>
+    <p>Masz prawo do dostępu, sprostowania, usunięcia danych oraz skargi do UODO. Kontakt: fundacja@zwierzogrod.eu</p>
+    <p style="margin-top:2rem;font-size:0.72rem;opacity:0.4;font-family:var(--mono);">// last_updated: 2026-06</p>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">ZG</div>
+    <span class="nav-logo-text">Zwierzo<span>gród</span></span>
+  </a>
+  <ul class="nav-links" id="navlinks">
+    <li><a href="#o-nas">O_nas</a></li>
+    <li><a href="#projekty">Projekty_AI</a></li>
+    <li><a href="#zwierzaki">Sanctuary</a></li>
+    <li><a href="#dane">KRS</a></li>
+    <li><a href="#wesprzyj" class="nav-cta">Wesprzyj</a></li>
+  </ul>
+  <div class="nav-ham" onclick="toggleNav()"><span></span><span></span><span></span></div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Smart Sanctuary · AI · OZE · KRS 0001241870</div>
+    <h1 class="hero-title">
+      Pierwsze<br>
+      <span class="green">smart</span> sanctuary<br>
+      <span class="dim">w Polsce.</span>
+    </h1>
+    <p class="hero-sub-title">Gdzie <span>technologia służy naturze</span> — i odwrotnie.</p>
+    <p class="hero-desc">Fundacja Zwierzogród łączy ochronę zwierząt z projektami AI, systemami OZE i nowoczesnymi technologiami. Budujemy model przyszłości — dziś, w Urbanach koło Obornik.<span class="hero-cursor"></span></p>
+    <div class="hero-btns">
+      <a href="#projekty" class="btn-p">Projekty AI →</a>
+      <a href="#wesprzyj" class="btn-g">Wesprzyj fundację</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hs"><span class="hs-num">4+</span><span class="hs-label">Projekty AI</span></div>
+      <div class="hs"><span class="hs-num">100%</span><span class="hs-label">OZE cel</span></div>
+      <div class="hs"><span class="hs-num">12+</span><span class="hs-label">Zwierzaków</span></div>
+      <div class="hs"><span class="hs-num">2026</span><span class="hs-label">KRS aktywny</span></div>
+    </div>
+  </div>
+  <div class="hero-krs"><span>KRS</span> 0001241870<br><span>NIP</span> 6060123206<br><span>REGON</span> 544802592</div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap"><div class="ticker-inner">
+  <span class="ticker-item">AI <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Smart Sanctuary <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">OZE <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Animoterapia <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Edukacja ekologiczna <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Hulajnogi elektryczne <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Smart monitoring <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">KRS 0001241870 <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Urbanie · Oborniki <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">AI <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Smart Sanctuary <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">OZE <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Animoterapia <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Edukacja ekologiczna <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Hulajnogi elektryczne <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Smart monitoring <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">KRS 0001241870 <span class="ticker-dot">◆</span></span>
+  <span class="ticker-item">Urbanie · Oborniki <span class="ticker-dot">◆</span></span>
+</div></div>
+
+<!-- O NAS -->
+<section id="o-nas">
+  <div class="container">
+    <div class="about-grid">
+      <div>
+        <div class="eyebrow">O fundacji</div>
+        <h2 class="stitle">Nie jesteśmy<br>zwykłą <em>fundacją.</em></h2>
+        <div class="green-rule"></div>
+        <p>Zwierzogród to platforma — łączymy ochronę zwierząt z projektami technologicznymi, które realnie zmieniają jak opiekujemy się naturą. Każdy projekt AI, który realizujemy, służy naszym zwierzętom, edukacji i środowisku.</p>
+        <p>Zagroda w Urbanach to nasze living lab — testujemy tu smart systemy, OZE, elektryczny transport i monitoring AI w prawdziwym środowisku. To nie demo. To działa.</p>
+        <div class="about-tech-list">
+          <div class="atl-item">Hulajnogi i transport elektryczny na terenie zagrody</div>
+          <div class="atl-item">Oświetlenie solarne — zero emisji</div>
+          <div class="atl-item">Smart monitoring zwierząt i terenu</div>
+          <div class="atl-item">Projekty AI do dokumentacji i edukacji</div>
+          <div class="atl-item">Programy terapeutyczne z udziałem zwierząt</div>
+        </div>
+      </div>
+      <div class="about-visual">
+        <div class="about-terminal">
+          <div class="at-header">
+            <div class="at-dot" style="background:#ff5f57;"></div>
+            <div class="at-dot" style="background:#febc2e;"></div>
+            <div class="at-dot" style="background:#28c840;"></div>
+            <span class="at-title">zwierzogrod_status.sh</span>
+          </div>
+          <div class="at-line"><span class="cmd">$</span> status <span class="val">--all</span></div>
+          <div class="at-line"><span class="com">// Fundacja Zwierzogród v1.0</span></div>
+          <div class="at-line"><span class="cmd">KRS:</span> <span class="val">0001241870</span> <span class="com">✓ active</span></div>
+          <div class="at-line"><span class="cmd">NIP:</span> <span class="val">6060123206</span> <span class="com">✓ active</span></div>
+          <div class="at-line"><span class="cmd">OZE:</span> <span class="val">solar_lights</span> <span class="com">✓ online</span></div>
+          <div class="at-line"><span class="cmd">transport:</span> <span class="val">electric</span> <span class="com">✓ running</span></div>
+          <div class="at-line"><span class="cmd">animals:</span> <span class="val">12</span> <span class="com">✓ healthy</span></div>
+          <div class="at-line"><span class="cmd">ai_projects:</span> <span class="val">4</span> <span class="com">✓ active</span></div>
+          <div class="at-line"><span class="com">// All systems operational</span></div>
+          <div class="at-stats">
+            <div class="at-stat"><div class="at-stat-num">12+</div><div class="at-stat-label">Zwierzaków</div></div>
+            <div class="at-stat"><div class="at-stat-num">100%</div><div class="at-stat-label">Cel OZE</div></div>
+            <div class="at-stat"><div class="at-stat-num">4</div><div class="at-stat-label">Proj. AI</div></div>
+            <div class="at-stat"><div class="at-stat-num">2026</div><div class="at-stat-label">Założona</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJEKTY AI -->
+<section id="projekty">
+  <div class="container">
+    <div class="eyebrow">Projekty technologiczne</div>
+    <h2 class="stitle">AI w służbie <em>zwierząt.</em></h2>
+    <div class="proj-grid">
+      <div class="pj">
+        <div class="pj-id">PROJECT_001 · AI</div>
+        <div class="pj-title">AI Dokumentacja Weterynaryjna</div>
+        <div class="pj-desc">System AI do automatycznej dokumentacji stanu zdrowia zwierząt — rozpoznawanie obrazów, analiza zdjęć, generowanie raportów. Mniej papierkologii, więcej czasu dla zwierząt.</div>
+        <div class="pj-tags"><span class="tag">Computer Vision</span><span class="tag">ML</span><span class="tag">Dokumentacja</span></div>
+        <div class="pj-status">W realizacji</div>
+      </div>
+      <div class="pj">
+        <div class="pj-id">PROJECT_002 · APP</div>
+        <div class="pj-title">Aplikacja Adopcyjna</div>
+        <div class="pj-desc">Mobilna platforma adopcyjna z AI matching — algorytm dopasowuje zwierzę do adoptera na podstawie stylu życia, warunków mieszkaniowych i preferencji. Adopcje które działają.</div>
+        <div class="pj-tags"><span class="tag">Mobile App</span><span class="tag">AI Matching</span><span class="tag">Adopcje</span></div>
+        <div class="pj-status">W planowaniu</div>
+      </div>
+      <div class="pj">
+        <div class="pj-id">PROJECT_003 · IOT</div>
+        <div class="pj-title">Smart Monitoring Zagrody</div>
+        <div class="pj-desc">Sieć czujników IoT monitorująca warunki w zagrodzie w czasie rzeczywistym — temperatura, wilgotność, aktywność zwierząt. Dane w chmurze, alerty na telefon.</div>
+        <div class="pj-tags"><span class="tag">IoT</span><span class="tag">Real-time</span><span class="tag">Monitoring</span></div>
+        <div class="pj-status">W realizacji</div>
+      </div>
+      <div class="pj">
+        <div class="pj-id">PROJECT_004 · EDU</div>
+        <div class="pj-title">AI Edukacja Ekologiczna</div>
+        <div class="pj-desc">Interaktywne programy edukacyjne z AI dla szkół — chatbot przyrodniczy, quizy, wirtualne wycieczki po zagrodzie. Edukacja ekologiczna na poziomie XXI wieku.</div>
+        <div class="pj-tags"><span class="tag">EdTech</span><span class="tag">AI Tutor</span><span class="tag">VR/AR</span></div>
+        <div class="pj-status">W planowaniu</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ZWIERZAKI -->
+<section id="zwierzaki">
+  <div class="container">
+    <div class="animals-hdr">
+      <div><div class="eyebrow">Smart Sanctuary · Mieszkańcy</div><h2 class="stitle">Poznaj <em>ekipę.</em></h2></div>
+      <p>Oni są powodem dla którego to wszystko robimy. I przy okazji najlepszymi testerami naszych systemów.</p>
+    </div>
+    <div class="animals-grid">
+      <div class="ac"><span class="ac-emoji">🐴</span><div class="ac-name">Kuba</div><div class="ac-sp">Kucyk · Unit_01</div><div class="ac-desc">Szef podwórka i główny tester hipoterapii. Majestatyczny, doskonale wie że jest najważniejszy.</div></div>
+      <div class="ac"><span class="ac-emoji">🐐</span><div class="ac-name">Krysia</div><div class="ac-sp">Koza · Unit_02</div><div class="ac-desc">Potrafi otworzyć każdą bramkę. Nasz nieoficjalny tester zabezpieczeń IoT. Zawsze wygrywa.</div></div>
+      <div class="ac"><span class="ac-emoji">🐇</span><div class="ac-name">Bugs</div><div class="ac-sp">Królik · Unit_03</div><div class="ac-desc">Miękki jak chmurka, szybki jak dobry algorytm. Ulubieniec dzieci na warsztatach.</div></div>
+      <div class="ac"><span class="ac-emoji">🐢</span><div class="ac-name">Ninja</div><div class="ac-sp">Żółw · Unit_04</div><div class="ac-desc">Proof że nie zawsze szybciej znaczy lepiej. Filozoficzny kontrapunkt dla całego tech stacka.</div></div>
+      <div class="ac"><span class="ac-emoji">🐓</span><div class="ac-name">Rocky</div><div class="ac-sp">Kogut · Unit_05</div><div class="ac-desc">Biologiczny cron job — uruchamia się o świcie bez wyjątków. Niezawodny jak dobry serwer.</div></div>
+      <div class="ac"><span class="ac-emoji">🐟</span><div class="ac-name">Nemo, Shark & Karosek</div><div class="ac-sp">Rybki · Unit_06-08</div><div class="ac-desc">Trio ze stawku. Monitorowane przez nasz system IoT. Zawsze pod obserwacją.</div></div>
+      <div class="ac"><span class="ac-emoji">🐑</span><div class="ac-name">Wełna, Puch & Baranek</div><div class="ac-sp">Owce · Unit_09-11</div><div class="ac-desc">Terapeutyczna siła zagrody. Spokojne, ciepłe, nieskończenie cierpliwe. Idealne do animoterapii.</div></div>
+      <div class="ac"><span class="ac-emoji">🐱</span><div class="ac-name">Dach</div><div class="ac-sp">Kot · Admin_01</div><div class="ac-desc">Oficjalnie nie należy do systemu. Faktycznie ma dostęp do wszystkiego. Root bez pytania.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH -->
+<section id="tech">
+  <div class="container">
+    <div class="eyebrow">Infrastruktura</div>
+    <h2 class="stitle">Smart tech <em>w akcji.</em></h2>
+    <div class="tech-grid">
+      <div class="tc"><div class="tc-icon">⚡</div><div class="tc-title">Transport elektryczny</div><div class="tc-desc">Hulajnogi elektryczne i pojazdy na terenie zagrody. Zero emisji, pełna mobilność. Przyszłość jest teraz.</div></div>
+      <div class="tc"><div class="tc-icon">☀️</div><div class="tc-title">Oświetlenie solarne</div><div class="tc-desc">Światła zasilane energią słoneczną. Autonomiczne, ekologiczne, zawsze działające. OZE w praktyce.</div></div>
+      <div class="tc"><div class="tc-icon">📡</div><div class="tc-title">Smart monitoring</div><div class="tc-desc">Sieć czujników IoT monitoruje zagrodę 24/7. Dane w czasie rzeczywistym, alerty natychmiastowe.</div></div>
+      <div class="tc"><div class="tc-icon">🤖</div><div class="tc-title">Systemy AI</div><div class="tc-desc">Projekty AI wspierające dokumentację, adopcje i edukację. Technologia która rozwiązuje realne problemy.</div></div>
+      <div class="tc"><div class="tc-icon">📱</div><div class="tc-title">Aplikacje mobilne</div><div class="tc-desc">Platformy cyfrowe łączące donatorów, wolontariuszy i adopcjodawców z naszymi zwierzętami.</div></div>
+      <div class="tc"><div class="tc-icon">🌱</div><div class="tc-title">Zero emisji — cel 2027</div><div class="tc-desc">Roadmapa do pełnej niezależności energetycznej. Panele PV, magazyny energii, smart grid.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- WESPRZYJ -->
+<section id="wesprzyj">
+  <div class="container">
+    <div class="sup-grid">
+      <div class="sup-text">
+        <div class="eyebrow">Wesprzyj fundację</div>
+        <h2 class="stitle">Zainwestuj<br>w <em>przyszłość.</em></h2>
+        <div class="green-rule"></div>
+        <p>Twoje wsparcie finansuje realne projekty — od zakupu paszy po rozwój systemów AI. Każda złotówka trafia bezpośrednio do programów fundacji.</p>
+        <p>Pełna transparentność finansowa. Raportujemy każdy wydatek.</p>
+        <p style="font-family:var(--mono);font-size:0.75rem;color:var(--gray);margin-top:1.5rem;margin-bottom:0.5rem;">// wybierz_kwotę_miesięczną:</p>
+        <div class="amounts">
+          <button class="ap">20 zł</button>
+          <button class="ap active">50 zł</button>
+          <button class="ap">100 zł</button>
+          <button class="ap">custom</button>
+        </div>
+      </div>
+      <div>
+        <div class="sup-box">
+          <div class="sup-lbl">// przelew_bankowy / BLIK</div>
+          <span class="acc-num">52 1870 1045 2078 1091 0298 0001</span>
+          <div class="sup-meta"><strong>Fundacja Zwierzogród</strong><br>Urbanie 13, 64-600 Oborniki<br>NIP: 6060123206 · KRS: 0001241870<br>Tytuł: <em>Darowizna na cele statutowe</em></div>
+          <div class="blik"><strong>// BLIK:</strong> aplikacja bankowa → Przelew → numer konta → potwierdź BLIKiem. Zero prowizji.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DANE -->
+<section id="dane">
+  <div class="container">
+    <div class="eyebrow">Dane rejestrowe</div>
+    <h2 class="stitle">Pełna <em>transparentność.</em></h2>
+    <div class="dane-grid">
+      <div class="dc"><div class="dc-lbl">// KRS</div><div class="dc-val green">0001241870</div></div>
+      <div class="dc"><div class="dc-lbl">// NIP</div><div class="dc-val green">6060123206</div></div>
+      <div class="dc"><div class="dc-lbl">// REGON</div><div class="dc-val green">544802592</div></div>
+      <div class="dc"><div class="dc-lbl">// rejestracja</div><div class="dc-val">20.05.2026</div></div>
+      <div class="dc"><div class="dc-lbl">// forma_prawna</div><div class="dc-val">Fundacja</div></div>
+      <div class="dc"><div class="dc-lbl">// prezes_zarządu</div><div class="dc-val">Mateusz Janus</div></div>
+      <div class="dc"><div class="dc-lbl">// siedziba</div><div class="dc-val">Urbanie 13<br>64-600 Oborniki</div></div>
+      <div class="dc"><div class="dc-lbl">// organ_nadzoru</div><div class="dc-val">Minister Rolnictwa i Rozwoju Wsi</div></div>
+    </div>
+    <p style="margin-top:1.2rem;font-family:var(--mono);font-size:0.7rem;color:var(--gray);">// Sąd Rejonowy Poznań – Nowe Miasto i Wilda, IX Wydział Gospodarczy KRS · PO.IX NS-REJ.KRS/9150/26/365</p>
+  </div>
+</section>
+
+<!-- KONTAKT -->
+<section id="kontakt">
+  <div class="container">
+    <div class="eyebrow">Kontakt</div>
+    <h2 class="stitle">Porozmawiajmy<em>.</em></h2>
+    <div class="con-grid">
+      <div>
+        <p class="con-info">Chcesz współpracować przy projekcie AI, zorganizować wizytę edukacyjną albo po prostu powiedzieć cześć Kubie? Napisz.</p>
+        <div class="ci"><div class="ci-icon">></div><div><strong>adres</strong><span>Urbanie 13, 64-600 Oborniki</span></div></div>
+        <div class="ci"><div class="ci-icon">></div><div><strong>email</strong><span>fundacja@zwierzogrod.eu</span></div></div>
+        <div class="ci"><div class="ci-icon">></div><div><strong>web</strong><span>zwierzogrod.eu</span></div></div>
+        <div class="ci"><div class="ci-icon">></div><div><strong>wizyty</strong><span>Po wcześniejszym umówieniu</span></div></div>
+      </div>
+      <div class="con-form">
+        <h3>// new_message()</h3>
+        <div class="fr">
+          <div class="fg"><label>imię_nazwisko</label><input type="text" placeholder="Jan Kowalski"></div>
+          <div class="fg"><label>email</label><input type="email" placeholder="jan@example.pl"></div>
+        </div>
+        <div class="fg"><label>temat</label><select><option>Projekt AI / współpraca</option><option>Wolontariat</option><option>Warsztaty i wizyty</option><option>Darowizna</option><option>Inne</option></select></div>
+        <div class="fg"><label>wiadomość</label><textarea placeholder="// opisz czego szukasz..."></textarea></div>
+        <button class="fsub">send() →</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="fi">
+    <div class="fl">
+      <div class="fl-mark">ZG</div>
+      <span class="fl-text">Zwierzo<span>gród</span></span>
+    </div>
+    <div class="fc">Fundacja Zwierzogród · KRS 0001241870 · NIP 6060123206<br>Urbanie 13, 64-600 Oborniki · fundacja@zwierzogrod.eu<br>© 2026 Fundacja Zwierzogród · <a onclick="showPP()">polityka_prywatności</a></div>
+    <ul class="flinks">
+      <li><a href="#o-nas">o_nas</a></li>
+      <li><a href="#projekty">projekty_ai</a></li>
+      <li><a href="#dane">krs</a></li>
+      <li><a href="#kontakt">kontakt</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('scrolled',window.scrollY>50));
+function closeCookie(){document.getElementById('cookie-banner').style.display='none';}
+function showPP(){document.getElementById('privacy-page').classList.add('active');window.scrollTo(0,0);}
+function hidePP(){document.getElementById('privacy-page').classList.remove('active');}
+document.querySelectorAll('.ap').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.ap').forEach(x=>x.classList.remove('active'));b.classList.add('active');}));
+function toggleNav(){
+  const nl=document.getElementById('navlinks');
+  const open=nl.style.display==='flex';
+  nl.style.cssText=open?'display:none':'display:flex;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:rgba(5,5,8,0.99);padding:1.5rem 2rem;gap:1.2rem;border-bottom:1px solid rgba(0,255,136,0.15);z-index:99;';
+}
+</script>
+</body>
+</html>
