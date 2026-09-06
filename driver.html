@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#09090b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<title>FLEET CORE — Kierowca</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          base: '#09090b', panel: '#131316', border: '#2e2e32',
+          accent: '#FF5722', gold: '#F0A500', ok: '#22C55E', crit: '#E11D2E', muted: '#9BA1A6',
+        },
+        fontFamily: {
+          head: ['"Barlow Condensed"', 'sans-serif'],
+          body: ['"Barlow"', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html, body { background: #09090b; overscroll-behavior-y: contain; }
+  body { -webkit-tap-highlight-color: transparent; user-select: none; }
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+  .tile { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+  .tile:active { transform: scale(0.97); }
+
+  .sheet {
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .sheet[data-open="false"] { transform: translateY(100%); }
+  .sheet[data-open="true"] { transform: translateY(0); }
+
+  input:focus, textarea:focus, button:focus-visible {
+    outline: 2px solid #FF5722;
+    outline-offset: 2px;
+  }
+
+  #camera-video, #capture-canvas { touch-action: none; }
+
+  .spinner {
+    border: 3px solid #2e2e32;
+    border-top-color: #FF5722;
+    border-radius: 50%;
+    width: 28px; height: 28px;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 1.4s; } }
+
+  .toast {
+    animation: toast-in 0.25s ease-out;
+  }
+  @keyframes toast-in { from { opacity:0; transform: translateY(8px);} to {opacity:1; transform:translateY(0);} }
+</style>
+</head>
+<body class="font-body text-zinc-50 min-h-screen overflow-x-hidden">
+
+<!-- ============ HEADER ============ -->
+<header class="safe-top border-b border-border px-4 pt-4 pb-3 flex items-center justify-between">
+  <div>
+    <div class="text-[11px] text-muted font-mono" id="driver-name">JAN KOWALSKI</div>
+    <div class="font-head text-xl tracking-wide -mt-0.5" id="truck-plate">PO 1234A</div>
+  </div>
+  <div class="flex items-center gap-2">
+    <div id="net-indicator" class="flex items-center gap-1.5 text-[11px] font-mono px-2 py-1 border border-border">
+      <span class="w-1.5 h-1.5 rounded-full bg-ok" id="net-dot"></span>
+      <span id="net-label">online</span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ TRIP STATUS BANNER ============ -->
+<div id="trip-banner" class="mx-4 mt-3 border-l-2 border-ok bg-panel px-4 py-3 hidden">
+  <div class="text-[11px] text-muted font-mono uppercase tracking-wide">W trasie</div>
+  <div class="font-head text-lg leading-tight" id="trip-route">— → —</div>
+  <div class="text-xs text-muted mt-0.5" id="trip-since">rozpoczęto —</div>
+</div>
+
+<!-- ============ MAIN: 3 TILES ============ -->
+<main class="px-4 py-4 space-y-4">
+
+  <button id="tile-start" class="tile w-full bg-panel border border-border rounded-none p-6 flex items-center gap-5 transition-transform">
+    <div class="w-16 h-16 flex-shrink-0 bg-ok/10 border border-ok/30 flex items-center justify-center">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>
+    </div>
+    <div class="text-left flex-1">
+      <div class="font-head text-2xl tracking-wide" id="start-tile-label">START TRASY</div>
+      <div class="text-sm text-muted">Podaj skąd, dokąd i stawkę</div>
+    </div>
+  </button>
+
+  <button id="tile-cmr" class="tile w-full bg-panel border border-border rounded-none p-6 flex items-center gap-5 transition-transform">
+    <div class="w-16 h-16 flex-shrink-0 bg-accent/10 border border-accent/30 flex items-center justify-center">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF5722" stroke-width="2"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+    </div>
+    <div class="text-left flex-1">
+      <div class="font-head text-2xl tracking-wide">FOTO CMR</div>
+      <div class="text-sm text-muted">Zrób zdjęcie po rozładunku</div>
+    </div>
+    <span id="cmr-pending-badge" class="hidden bg-gold text-zinc-950 text-[11px] font-mono font-semibold px-2 py-1">0</span>
+  </button>
+
+  <button id="tile-fuel" class="tile w-full bg-panel border border-border rounded-none p-6 flex items-center gap-5 transition-transform">
+    <div class="w-16 h-16 flex-shrink-0 bg-gold/10 border border-gold/30 flex items-center justify-center">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#F0A500" stroke-width="2"><path d="M3 22h12"/><path d="M4 9h10"/><path d="M14 22V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v18"/><path d="M14 13h1.5a2 2 0 0 1 2 2v2a1.5 1.5 0 0 0 3 0V9.5a1 1 0 0 0-.3-.7L18 6.5"/></svg>
+    </div>
+    <div class="text-left flex-1">
+      <div class="font-head text-2xl tracking-wide">TANKOWANIE</div>
+      <div class="text-sm text-muted">Litry i koszt paliwa</div>
+    </div>
+  </button>
+
+</main>
+
+<div class="px-4 pb-6 safe-bottom">
+  <div class="text-center text-[11px] text-muted font-mono" id="queue-status"></div>
+</div>
+
+<!-- ============ SHEET: START TRASY ============ -->
+<div id="sheet-start" class="sheet fixed inset-x-0 bottom-0 z-40 bg-panel border-t border-border rounded-t-2xl safe-bottom" data-open="false">
+  <div class="px-5 pt-5 pb-6 max-h-[85vh] overflow-y-auto">
+    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
+    <h2 class="font-head text-2xl tracking-wide mb-4">Start trasy</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs text-muted block mb-1.5">Skąd</label>
+        <input id="in-from" type="text" placeholder="Poznań, PL" class="w-full bg-base border border-border px-4 py-3.5 text-lg text-zinc-50">
+      </div>
+      <div>
+        <label class="text-xs text-muted block mb-1.5">Dokąd</label>
+        <input id="in-to" type="text" placeholder="Lyon, FR" class="w-full bg-base border border-border px-4 py-3.5 text-lg text-zinc-50">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs text-muted block mb-1.5">Stawka (EUR)</label>
+          <input id="in-rate" type="number" inputmode="decimal" placeholder="1450" class="w-full bg-base border border-border px-4 py-3.5 text-lg font-mono text-zinc-50">
+        </div>
+        <div>
+          <label class="text-xs text-muted block mb-1.5">Km</label>
+          <input id="in-km" type="number" inputmode="numeric" placeholder="1380" class="w-full bg-base border border-border px-4 py-3.5 text-lg font-mono text-zinc-50">
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button data-close="sheet-start" class="flex-1 py-4 border border-border text-muted font-head text-lg tracking-wide">Anuluj</button>
+      <button id="confirm-start" class="flex-1 py-4 bg-ok text-zinc-950 font-head text-lg tracking-wide font-semibold">Rozpocznij</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ SHEET: TANKOWANIE ============ -->
+<div id="sheet-fuel" class="sheet fixed inset-x-0 bottom-0 z-40 bg-panel border-t border-border rounded-t-2xl safe-bottom" data-open="false">
+  <div class="px-5 pt-5 pb-6 max-h-[85vh] overflow-y-auto">
+    <div class="w-10 h-1 bg-border rounded-full mx-auto mb-4"></div>
+    <h2 class="font-head text-2xl tracking-wide mb-4">Tankowanie</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="text-xs text-muted block mb-1.5">Litry</label>
+        <input id="in-liters" type="number" inputmode="decimal" placeholder="400" class="w-full bg-base border border-border px-4 py-3.5 text-lg font-mono text-zinc-50">
+      </div>
+      <div>
+        <label class="text-xs text-muted block mb-1.5">Koszt (EUR)</label>
+        <input id="in-fuel-cost" type="number" inputmode="decimal" placeholder="688" class="w-full bg-base border border-border px-4 py-3.5 text-lg font-mono text-zinc-50">
+      </div>
+      <div>
+        <label class="text-xs text-muted block mb-1.5">Lokalizacja</label>
+        <input id="in-fuel-location" type="text" placeholder="Görlitz, DE" class="w-full bg-base border border-border px-4 py-3.5 text-lg text-zinc-50">
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button data-close="sheet-fuel" class="flex-1 py-4 border border-border text-muted font-head text-lg tracking-wide">Anuluj</button>
+      <button id="confirm-fuel" class="flex-1 py-4 bg-gold text-zinc-950 font-head text-lg tracking-wide font-semibold">Zapisz</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ CAMERA OVERLAY ============ -->
+<div id="camera-overlay" class="fixed inset-0 z-50 bg-black hidden flex-col">
+  <div class="safe-top flex items-center justify-between px-4 py-3">
+    <button id="camera-close" class="text-zinc-50 text-sm font-mono border border-border px-3 py-1.5">Anuluj</button>
+    <span class="text-zinc-50 font-head text-lg tracking-wide">FOTO CMR</span>
+    <span class="w-16"></span>
+  </div>
+
+  <div class="flex-1 relative flex items-center justify-center overflow-hidden">
+    <video id="camera-video" class="w-full h-full object-cover" autoplay playsinline muted></video>
+    <canvas id="capture-canvas" class="hidden"></canvas>
+    <img id="preview-img" class="w-full h-full object-contain hidden bg-black" />
+    <div class="absolute inset-x-6 top-1/2 -translate-y-1/2 border-2 border-accent/60 aspect-[1.4/1] pointer-events-none" id="frame-guide"></div>
+  </div>
+
+  <div class="safe-bottom px-6 py-6 flex items-center justify-center gap-6" id="camera-controls">
+    <button id="btn-capture" class="w-20 h-20 rounded-full border-4 border-white flex-shrink-0 flex items-center justify-center">
+      <span class="w-16 h-16 rounded-full bg-white"></span>
+    </button>
+  </div>
+
+  <div class="safe-bottom px-6 py-6 hidden items-center justify-center gap-4" id="preview-controls">
+    <button id="btn-retake" class="flex-1 py-4 border border-border text-zinc-50 font-head text-lg tracking-wide max-w-[160px]">Powtórz</button>
+    <button id="btn-use-photo" class="flex-1 py-4 bg-accent text-white font-head text-lg tracking-wide font-semibold max-w-[220px]">Użyj zdjęcia</button>
+  </div>
+
+  <div id="camera-processing" class="hidden absolute inset-0 bg-black/80 flex flex-col items-center justify-center gap-3">
+    <div class="spinner"></div>
+    <div class="text-zinc-50 font-mono text-sm" id="processing-label">Przetwarzanie…</div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="hidden fixed bottom-6 left-4 right-4 z-50 toast">
+  <div class="bg-zinc-50 text-zinc-950 px-4 py-3 font-body text-sm font-medium text-center shadow-lg" id="toast-text"></div>
+</div>
+
+<!-- ============ FIREBASE ============ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<script>
+/* =========================================================
+   KONFIGURACJA
+   Podmień na swoje dane + prawdziwe ID kierowcy/pojazdu
+   (docelowo: ekran logowania kierowcy zamiast hardkodu)
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "TWOJ_API_KEY",
+  authDomain: "TWOJ_PROJEKT.firebaseapp.com",
+  databaseURL: "https://TWOJ_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "TWOJ_PROJEKT",
+  storageBucket: "TWOJ_PROJEKT.appspot.com",
+};
+
+const DRIVER_ID = localStorage.getItem('fc_driver_id') || 'driver_01';
+const TRUCK_ID = localStorage.getItem('fc_truck_id') || 'truck_01';
+
+let db = null, storage = null, firebaseReady = false;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  storage = firebase.storage();
+  firebaseReady = true;
+} catch (e) {
+  console.warn('Firebase niepodłączony — zdjęcia trafią tylko do lokalnej kolejki.', e);
+}
+
+document.getElementById('driver-name').textContent = 'KIEROWCA: ' + DRIVER_ID.toUpperCase();
+document.getElementById('truck-plate').textContent = TRUCK_ID.toUpperCase();
+
+let CURRENT_TRIP_ID = localStorage.getItem('fc_current_trip_id') || null;
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+function toast(msg, ms = 2600) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-text').textContent = msg;
+  el.classList.remove('hidden');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.add('hidden'), ms);
+}
+
+/* =========================================================
+   SIEĆ — wskaźnik online/offline
+   ========================================================= */
+function updateNetIndicator() {
+  const online = navigator.onLine;
+  document.getElementById('net-dot').className = 'w-1.5 h-1.5 rounded-full ' + (online ? 'bg-ok' : 'bg-crit');
+  document.getElementById('net-label').textContent = online ? 'online' : 'offline';
+  if (online) flushQueue();
+}
+window.addEventListener('online', updateNetIndicator);
+window.addEventListener('offline', updateNetIndicator);
+updateNetIndicator();
+
+/* =========================================================
+   SHEETS (bottom sheet modale)
+   ========================================================= */
+function openSheet(id) { document.getElementById(id).dataset.open = 'true'; }
+function closeSheet(id) { document.getElementById(id).dataset.open = 'false'; }
+
+document.getElementById('tile-start').addEventListener('click', () => openSheet('sheet-start'));
+document.getElementById('tile-fuel').addEventListener('click', () => {
+  if (!CURRENT_TRIP_ID) { toast('Najpierw rozpocznij trasę'); return; }
+  openSheet('sheet-fuel');
+});
+document.querySelectorAll('[data-close]').forEach(btn => {
+  btn.addEventListener('click', () => closeSheet(btn.dataset.close));
+});
+
+/* =========================================================
+   START TRASY
+   ========================================================= */
+document.getElementById('confirm-start').addEventListener('click', () => {
+  const from = document.getElementById('in-from').value.trim();
+  const to = document.getElementById('in-to').value.trim();
+  const rate = parseFloat(document.getElementById('in-rate').value) || 0;
+  const km = parseFloat(document.getElementById('in-km').value) || 0;
+
+  if (!from || !to) { toast('Podaj skąd i dokąd'); return; }
+
+  const tripId = 'trip_' + Date.now();
+  const tripData = {
+    truck_id: TRUCK_ID,
+    driver_id: DRIVER_ID,
+    route: { from, to },
+    rate_eur: rate,
+    distance_km: km,
+    status: 'in_progress',
+    started_at: Date.now(),
+  };
+
+  CURRENT_TRIP_ID = tripId;
+  localStorage.setItem('fc_current_trip_id', tripId);
+  localStorage.setItem('fc_current_trip_data', JSON.stringify(tripData));
+
+  if (firebaseReady && navigator.onLine) {
+    db.ref(`/active_trips/${tripId}`).set(tripData)
+      .then(() => toast('Trasa rozpoczęta'))
+      .catch(() => toast('Zapisano lokalnie, prześlę gdy wróci zasięg'));
+  } else {
+    queueAction({ type: 'start_trip', tripId, tripData });
+    toast('Brak zasięgu — trasa zapisana lokalnie');
+  }
+
+  renderTripBanner();
+  closeSheet('sheet-start');
+  document.getElementById('in-from').value = '';
+  document.getElementById('in-to').value = '';
+  document.getElementById('in-rate').value = '';
+  document.getElementById('in-km').value = '';
+});
+
+function renderTripBanner() {
+  const banner = document.getElementById('trip-banner');
+  const raw = localStorage.getItem('fc_current_trip_data');
+  if (!CURRENT_TRIP_ID || !raw) { banner.classList.add('hidden'); return; }
+  const trip = JSON.parse(raw);
+  banner.classList.remove('hidden');
+  document.getElementById('trip-route').textContent = `${trip.route.from} → ${trip.route.to}`;
+  const started = new Date(trip.started_at);
+  document.getElementById('trip-since').textContent = 'rozpoczęto ' + started.toLocaleDateString('pl-PL') + ' ' + started.toLocaleTimeString('pl-PL', {hour:'2-digit', minute:'2-digit'});
+}
+renderTripBanner();
+
+/* =========================================================
+   TANKOWANIE
+   ========================================================= */
+document.getElementById('confirm-fuel').addEventListener('click', () => {
+  const liters = parseFloat(document.getElementById('in-liters').value) || 0;
+  const cost = parseFloat(document.getElementById('in-fuel-cost').value) || 0;
+  const location = document.getElementById('in-fuel-location').value.trim();
+
+  if (!liters || !cost) { toast('Podaj litry i koszt'); return; }
+
+  const logData = { liters, cost_eur: cost, location, timestamp: Date.now() };
+  const logId = 'log_' + Date.now();
+
+  if (firebaseReady && navigator.onLine && CURRENT_TRIP_ID) {
+    db.ref(`/active_trips/${CURRENT_TRIP_ID}/fuel_logs/${logId}`).set(logData)
+      .then(() => toast('Tankowanie zapisane'))
+      .catch(() => { queueAction({ type: 'fuel_log', tripId: CURRENT_TRIP_ID, logId, logData }); toast('Zapisano lokalnie'); });
+  } else {
+    queueAction({ type: 'fuel_log', tripId: CURRENT_TRIP_ID, logId, logData });
+    toast('Brak zasięgu — zapisano lokalnie');
+  }
+
+  closeSheet('sheet-fuel');
+  document.getElementById('in-liters').value = '';
+  document.getElementById('in-fuel-cost').value = '';
+  document.getElementById('in-fuel-location').value = '';
+});
+
+/* =========================================================
+   KAMERA — FOTO CMR
+   ========================================================= */
+let stream = null;
+let capturedBlob = null;
+
+document.getElementById('tile-cmr').addEventListener('click', openCamera);
+document.getElementById('camera-close').addEventListener('click', closeCamera);
+
+async function openCamera() {
+  document.getElementById('camera-overlay').classList.remove('hidden');
+  document.getElementById('camera-overlay').classList.add('flex');
+  resetCameraUI();
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    document.getElementById('camera-video').srcObject = stream;
+  } catch (e) {
+    console.warn('getUserMedia niedostępne, fallback na input file.', e);
+    closeCamera();
+    fallbackFileInput();
+  }
+}
+
+function closeCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  document.getElementById('camera-overlay').classList.add('hidden');
+  document.getElementById('camera-overlay').classList.remove('flex');
+}
+
+function resetCameraUI() {
+  document.getElementById('camera-video').classList.remove('hidden');
+  document.getElementById('preview-img').classList.add('hidden');
+  document.getElementById('camera-controls').classList.remove('hidden');
+  document.getElementById('preview-controls').classList.add('hidden');
+  document.getElementById('preview-controls').classList.remove('flex');
+  document.getElementById('frame-guide').classList.remove('hidden');
+  document.getElementById('camera-processing').classList.add('hidden');
+}
+
+// Fallback dla przeglądarek bez getUserMedia (np. starsze iOS Safari w trybie PWA)
+function fallbackFileInput() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.capture = 'environment';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) processImageFile(file);
+  };
+  input.click();
+}
+
+document.getElementById('btn-capture').addEventListener('click', () => {
+  const video = document.getElementById('camera-video');
+  const canvas = document.getElementById('capture-canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob((blob) => processImageBlob(blob), 'image/jpeg', 0.92);
+});
+
+function processImageFile(file) {
+  document.getElementById('camera-overlay').classList.remove('hidden');
+  document.getElementById('camera-overlay').classList.add('flex');
+  processImageBlob(file);
+}
+
+/* --- Przetwarzanie: resize + wyostrzanie + kompresja --- */
+function processImageBlob(rawBlob) {
+  document.getElementById('camera-processing').classList.remove('hidden');
+  document.getElementById('processing-label').textContent = 'Wyostrzanie i kompresja…';
+
+  const img = new Image();
+  img.onload = () => {
+    const MAX_W = 1600;
+    const scale = Math.min(1, MAX_W / img.width);
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // Lekkie wyostrzanie (unsharp mask, uproszczony 3x3 konwolucja)
+    try {
+      const imageData = ctx.getImageData(0, 0, w, h);
+      sharpen(imageData);
+      ctx.putImageData(imageData, 0, 0);
+    } catch (e) { console.warn('Pominięto wyostrzanie:', e); }
+
+    canvas.toBlob((finalBlob) => {
+      capturedBlob = finalBlob;
+      const url = URL.createObjectURL(finalBlob);
+      document.getElementById('preview-img').src = url;
+      document.getElementById('preview-img').classList.remove('hidden');
+      document.getElementById('camera-video').classList.add('hidden');
+      document.getElementById('frame-guide').classList.add('hidden');
+      document.getElementById('camera-controls').classList.add('hidden');
+      document.getElementById('preview-controls').classList.remove('hidden');
+      document.getElementById('preview-controls').classList.add('flex');
+      document.getElementById('camera-processing').classList.add('hidden');
+    }, 'image/jpeg', 0.78);
+  };
+  img.src = URL.createObjectURL(rawBlob);
+}
+
+function sharpen(imageData) {
+  const { data, width, height } = imageData;
+  const weights = [0,-1,0, -1,5,-1, 0,-1,0];
+  const copy = new Uint8ClampedArray(data);
+  const side = 3, half = 1;
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      for (let c = 0; c < 3; c++) {
+        let sum = 0;
+        for (let ky = 0; ky < side; ky++) {
+          for (let kx = 0; kx < side; kx++) {
+            const px = x + kx - half, py = y + ky - half;
+            sum += copy[(py * width + px) * 4 + c] * weights[ky * side + kx];
+          }
+        }
+        data[(y * width + x) * 4 + c] = sum;
+      }
+    }
+  }
+}
+
+document.getElementById('btn-retake').addEventListener('click', () => {
+  capturedBlob = null;
+  resetCameraUI();
+});
+
+document.getElementById('btn-use-photo').addEventListener('click', async () => {
+  if (!capturedBlob) return;
+  const tripId = CURRENT_TRIP_ID || 'trip_bez_startu';
+  const cmrId = 'cmr_' + Date.now();
+  const path = `cmr/${tripId}/${cmrId}.jpg`;
+  const meta = {
+    trip_id: tripId,
+    truck_id: TRUCK_ID,
+    driver_id: DRIVER_ID,
+    storage_path: path,
+    uploaded_at: Date.now(),
+    status: 'pending_invoice',
+  };
+
+  closeCamera();
+
+  if (firebaseReady && navigator.onLine) {
+    uploadCMR(cmrId, path, meta, capturedBlob);
+  } else {
+    await queuePhoto(cmrId, path, meta, capturedBlob);
+    toast('Brak zasięgu — zdjęcie w kolejce, wyśle się automatycznie');
+    updateQueueBadge();
+  }
+});
+
+function uploadCMR(cmrId, path, meta, blob) {
+  toast('Wysyłanie zdjęcia CMR…');
+  const ref = storage.ref(path);
+  ref.put(blob).then(() => {
+    return db.ref(`/cmr_documents/${cmrId}`).set(meta);
+  }).then(() => {
+    toast('CMR wysłane — biuro widzi je od razu');
+  }).catch(async (err) => {
+    console.error('Upload nieudany, kolejkuję.', err);
+    await queuePhoto(cmrId, path, meta, blob);
+    toast('Błąd wysyłki — zdjęcie w kolejce lokalnej');
+    updateQueueBadge();
+  });
+}
+
+/* =========================================================
+   KOLEJKA OFFLINE (IndexedDB) — zdjęcia CMR i akcje tekstowe
+   Krytyczne dla tras międzynarodowych bez zasięgu (DE/FR granice, tunele)
+   ========================================================= */
+const IDB_NAME = 'fleet_core_queue';
+const IDB_STORE = 'pending';
+
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(IDB_STORE, { keyPath: 'id' });
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function queuePhoto(cmrId, path, meta, blob) {
+  const dbx = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = dbx.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put({ id: cmrId, kind: 'cmr_photo', path, meta, blob });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function queueAction(action) {
+  const dbx = await idbOpen();
+  const id = action.type + '_' + Date.now();
+  return new Promise((resolve, reject) => {
+    const tx = dbx.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put({ id, kind: 'action', action });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getQueue() {
+  const dbx = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = dbx.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function removeFromQueue(id) {
+  const dbx = await idbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = dbx.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function updateQueueBadge() {
+  const items = await getQueue();
+  const el = document.getElementById('cmr-pending-badge');
+  const statusEl = document.getElementById('queue-status');
+  if (items.length > 0) {
+    el.textContent = items.length;
+    el.classList.remove('hidden');
+    statusEl.textContent = `${items.length} element(y) oczekuje na wysłanie`;
+  } else {
+    el.classList.add('hidden');
+    statusEl.textContent = '';
+  }
+}
+
+async function flushQueue() {
+  if (!firebaseReady || !navigator.onLine) return;
+  const items = await getQueue();
+  if (!items.length) return;
+  toast(`Wysyłam ${items.length} oczekujące…`);
+
+  for (const item of items) {
+    try {
+      if (item.kind === 'cmr_photo') {
+        await storage.ref(item.path).put(item.blob);
+        await db.ref(`/cmr_documents/${item.id}`).set(item.meta);
+      } else if (item.kind === 'action') {
+        const a = item.action;
+        if (a.type === 'start_trip') {
+          await db.ref(`/active_trips/${a.tripId}`).set(a.tripData);
+        } else if (a.type === 'fuel_log') {
+          await db.ref(`/active_trips/${a.tripId}/fuel_logs/${a.logId}`).set(a.logData);
+        }
+      }
+      await removeFromQueue(item.id);
+    } catch (e) {
+      console.error('Nie udało się wysłać elementu kolejki, spróbuję później.', e);
+      break; // przerwij, spróbujemy przy następnym online
+    }
+  }
+  updateQueueBadge();
+  toast('Kolejka zsynchronizowana');
+}
+
+updateQueueBadge();
+setInterval(() => { if (navigator.onLine) flushQueue(); }, 60000);
+
+/* =========================================================
+   REJESTRACJA SERVICE WORKERA (PWA offline shell)
+   ========================================================= */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW nie zarejestrowany:', e));
+  });
+}
+</script>
+</body>
+</html>

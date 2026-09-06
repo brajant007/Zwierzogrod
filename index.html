@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Szwedek FLEET CORE — Komandor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          base: '#09090b',
+          panel: '#131316',
+          panel2: '#0e0e10',
+          border: '#232326',
+          borderlt: '#2e2e32',
+          accent: '#FF5722',
+          gold: '#F0A500',
+          ok: '#22C55E',
+          crit: '#E11D2E',
+          muted: '#9BA1A6',
+        },
+        fontFamily: {
+          head: ['"Barlow Condensed"', 'sans-serif'],
+          body: ['"Barlow"', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { scrollbar-color: #2e2e32 #09090b; }
+  body { background-color: #09090b; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #09090b; }
+  ::-webkit-scrollbar-thumb { background: #2e2e32; border-radius: 2px; }
+
+  .status-dot { box-shadow: 0 0 0 3px rgba(0,0,0,0.3); }
+  .pulse-ok { animation: pulse-ok 2.2s ease-in-out infinite; }
+  @keyframes pulse-ok {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.45); }
+    50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pulse-ok { animation: none; }
+  }
+
+  #fleet-map { background: #0e0e10; }
+  .leaflet-container { background: #0e0e10; font-family: 'Barlow', sans-serif; }
+  .leaflet-popup-content-wrapper { background: #131316; color: #F4F4F5; border: 1px solid #2e2e32; border-radius: 2px; }
+  .leaflet-popup-tip { background: #131316; }
+  .leaflet-popup-content { font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+
+  .vms-strip { background: linear-gradient(180deg, #0c0c0e 0%, #09090b 100%); }
+
+  input:focus, select:focus, button:focus-visible {
+    outline: 2px solid #FF5722;
+    outline-offset: 1px;
+  }
+
+  .tab-btn[data-active="true"] {
+    color: #F4F4F5;
+    border-bottom-color: #FF5722;
+  }
+</style>
+</head>
+<body class="font-body text-zinc-100 min-h-screen">
+
+<!-- ============ TOP VMS STRIP ============ -->
+<header class="vms-strip border-b border-border sticky top-0 z-30">
+  <div class="max-w-[1600px] mx-auto px-4 md:px-6 py-3 flex flex-wrap items-center gap-x-8 gap-y-2">
+    <div class="flex items-center gap-2">
+      <div class="w-2 h-8 bg-accent"></div>
+      <div>
+        <h1 class="font-head text-2xl leading-none tracking-tight text-zinc-50">SZWEDEK <span class="text-accent">FLEET CORE</span></h1>
+        <p class="text-[11px] text-muted font-mono -mt-0.5" id="clock">--:--:-- · ładowanie</p>
+      </div>
+    </div>
+
+    <div class="flex-1"></div>
+
+    <div class="flex items-center gap-6 font-mono text-sm">
+      <div class="text-center">
+        <div class="text-2xl text-ok leading-none" id="kpi-active">0</div>
+        <div class="text-[10px] text-muted font-body mt-1">w trasie</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl text-gold leading-none" id="kpi-alerts">0</div>
+        <div class="text-[10px] text-muted font-body mt-1">alerty serwisowe</div>
+      </div>
+      <div class="text-center">
+        <div class="text-2xl text-accent leading-none" id="kpi-cmr">0</div>
+        <div class="text-[10px] text-muted font-body mt-1">CMR do fakturowania</div>
+      </div>
+    </div>
+  </div>
+
+  <nav class="max-w-[1600px] mx-auto px-4 md:px-6 flex gap-6 border-t border-border">
+    <button class="tab-btn text-sm py-2.5 border-b-2 border-transparent text-muted hover:text-zinc-200 transition-colors" data-tab="dashboard" data-active="true">Dashboard</button>
+    <button class="tab-btn text-sm py-2.5 border-b-2 border-transparent text-muted hover:text-zinc-200 transition-colors" data-tab="kalkulator">Kalkulator marży</button>
+    <button class="tab-btn text-sm py-2.5 border-b-2 border-transparent text-muted hover:text-zinc-200 transition-colors" data-tab="flota">Flota</button>
+  </nav>
+</header>
+
+<main class="max-w-[1600px] mx-auto px-4 md:px-6 py-5">
+
+  <!-- ============ VIEW: DASHBOARD ============ -->
+  <section id="view-dashboard" class="view">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+      <!-- LEFT: map + active trips -->
+      <div class="lg:col-span-2 space-y-5">
+
+        <div class="border border-border bg-panel">
+          <div class="border-l-2 border-accent px-4 py-2.5 flex items-center justify-between">
+            <h2 class="font-head text-lg tracking-wide text-zinc-100">Pozycje na trasie</h2>
+            <span class="text-[11px] font-mono text-muted" id="map-updated">—</span>
+          </div>
+          <div id="fleet-map" class="h-[360px] border-t border-border"></div>
+        </div>
+
+        <div class="border border-border bg-panel">
+          <div class="border-l-2 border-accent px-4 py-2.5">
+            <h2 class="font-head text-lg tracking-wide text-zinc-100">Aktywne trasy</h2>
+          </div>
+          <div class="divide-y divide-border" id="active-trips-list">
+            <!-- injected -->
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: alerts + CMR queue -->
+      <div class="space-y-5">
+
+        <div class="border border-border bg-panel">
+          <div class="border-l-2 border-gold px-4 py-2.5 flex items-center justify-between">
+            <h2 class="font-head text-lg tracking-wide text-zinc-100">Alerty serwisowe</h2>
+          </div>
+          <div class="divide-y divide-border max-h-[300px] overflow-y-auto" id="alerts-list">
+            <!-- injected -->
+          </div>
+        </div>
+
+        <div class="border border-border bg-panel">
+          <div class="border-l-2 border-accent px-4 py-2.5 flex items-center justify-between">
+            <h2 class="font-head text-lg tracking-wide text-zinc-100">CMR — do fakturowania</h2>
+          </div>
+          <div class="divide-y divide-border max-h-[420px] overflow-y-auto" id="cmr-queue">
+            <!-- injected -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW: KALKULATOR MARŻY ============ -->
+  <section id="view-kalkulator" class="view hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+      <div class="border border-border bg-panel">
+        <div class="border-l-2 border-accent px-4 py-2.5">
+          <h2 class="font-head text-lg tracking-wide text-zinc-100">Dane frachtu</h2>
+          <p class="text-xs text-muted mt-0.5">Policz zysk na czysto, zanim weźmiesz zlecenie z giełdy.</p>
+        </div>
+        <div class="p-4 space-y-4">
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-muted block mb-1">Stawka frachtu (EUR)</label>
+              <input type="number" id="calc-rate" value="1450" class="w-full bg-panel2 border border-borderlt px-3 py-2 font-mono text-sm text-zinc-100">
+            </div>
+            <div>
+              <label class="text-xs text-muted block mb-1">Kilometry (km)</label>
+              <input type="number" id="calc-km" value="1380" class="w-full bg-panel2 border border-borderlt px-3 py-2 font-mono text-sm text-zinc-100">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-muted block mb-1">Spalanie (l/100km)</label>
+              <input type="number" id="calc-consumption" value="29" class="w-full bg-panel2 border border-borderlt px-3 py-2 font-mono text-sm text-zinc-100">
+            </div>
+            <div>
+              <label class="text-xs text-muted block mb-1">Cena paliwa (EUR/l)</label>
+              <input type="number" step="0.01" id="calc-fuel-price" value="1.72" class="w-full bg-panel2 border border-borderlt px-3 py-2 font-mono text-sm text-zinc-100">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-muted block mb-1">Myto DE (EUR)</label>
+              <input type="number" id="calc-toll-de" value="140" class="w-full bg-panel2 border border-borderlt px-3 py-2 font-mono text-sm text-zinc-100">
+            </div>
+            <div>
+              <label class="text-xs text-muted block mb-1">Myto FR (EUR)</label>
+              <input type="number" id="calc-toll-fr" value="95" class="w-full bg-panel2 border border-borderlt px-3 py-2 font-mono text-sm text-zinc-100">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs text-muted block mb-1">Dieta + koszty kierowcy (EUR)</label>
+              <input type="number" id="calc-driver-cost" value="180" class="w-full bg-panel2 border border-borderlt px-3 py-2 font-mono text-sm text-zinc-100">
+            </div>
+            <div>
+              <label class="text-xs text-muted block mb-1">Kurs EUR/PLN</label>
+              <input type="number" step="0.01" id="calc-fx" value="4.28" class="w-full bg-panel2 border border-borderlt px-3 py-2 font-mono text-sm text-zinc-100">
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="border border-border bg-panel">
+        <div class="border-l-2 border-ok px-4 py-2.5">
+          <h2 class="font-head text-lg tracking-wide text-zinc-100">Wynik</h2>
+        </div>
+        <div class="p-4 space-y-3 font-mono text-sm">
+          <div class="flex justify-between py-1.5 border-b border-border"><span class="text-muted font-body">Przychód frachtu</span><span id="r-rate">—</span></div>
+          <div class="flex justify-between py-1.5 border-b border-border"><span class="text-muted font-body">Koszt paliwa</span><span id="r-fuel" class="text-crit">—</span></div>
+          <div class="flex justify-between py-1.5 border-b border-border"><span class="text-muted font-body">Myto (DE+FR)</span><span id="r-toll" class="text-crit">—</span></div>
+          <div class="flex justify-between py-1.5 border-b border-border"><span class="text-muted font-body">Koszty kierowcy</span><span id="r-driver" class="text-crit">—</span></div>
+          <div class="flex justify-between py-1.5 border-b border-border"><span class="text-muted font-body">Koszt / km</span><span id="r-perkm">—</span></div>
+          <div class="mt-4 pt-3 border-t-2 border-borderlt">
+            <div class="flex justify-between items-baseline">
+              <span class="font-head text-base text-zinc-200 tracking-wide">ZYSK NA CZYSTO</span>
+              <span id="r-profit-eur" class="text-lg text-ok">—</span>
+            </div>
+            <div class="flex justify-end mt-1">
+              <span id="r-profit-pln" class="text-2xl text-ok font-semibold">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ VIEW: FLOTA ============ -->
+  <section id="view-flota" class="view hidden">
+    <div class="border border-border bg-panel">
+      <div class="border-l-2 border-accent px-4 py-2.5">
+        <h2 class="font-head text-lg tracking-wide text-zinc-100">Pojazdy</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-muted text-xs border-b border-border">
+              <th class="px-4 py-2 font-normal">Pojazd</th>
+              <th class="px-4 py-2 font-normal">Tablica</th>
+              <th class="px-4 py-2 font-normal">Kierowca</th>
+              <th class="px-4 py-2 font-normal">Status</th>
+              <th class="px-4 py-2 font-normal">Przegląd</th>
+              <th class="px-4 py-2 font-normal">Tachograf</th>
+              <th class="px-4 py-2 font-normal">OCP</th>
+            </tr>
+          </thead>
+          <tbody id="fleet-table-body" class="divide-y divide-border font-mono text-xs">
+            <!-- injected -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="max-w-[1600px] mx-auto px-4 md:px-6 py-4 text-[11px] text-muted font-mono border-t border-border mt-6">
+  Szwedek Fleet Core · v0.1 · Firebase sync: <span id="fb-status">niepodłączone</span>
+</footer>
+
+<!-- ============ FIREBASE ============ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* =========================================================
+   KONFIGURACJA FIREBASE
+   Podmień na dane swojego projektu (Firebase Console > Project settings)
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "TWOJ_API_KEY",
+  authDomain: "TWOJ_PROJEKT.firebaseapp.com",
+  databaseURL: "https://TWOJ_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "TWOJ_PROJEKT",
+  storageBucket: "TWOJ_PROJEKT.appspot.com",
+};
+
+let db = null;
+let firebaseReady = false;
+
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+  firebaseReady = true;
+  document.getElementById('fb-status').textContent = 'aktywne';
+  document.getElementById('fb-status').classList.add('text-ok');
+} catch (e) {
+  console.warn('Firebase niepodłączony — działam na danych demo.', e);
+  document.getElementById('fb-status').textContent = 'tryb demo (brak konfiguracji)';
+  document.getElementById('fb-status').classList.add('text-gold');
+}
+
+/* =========================================================
+   DANE DEMO (używane gdy Firebase nie jest skonfigurowany)
+   ========================================================= */
+const DEMO = {
+  trucks: {
+    truck_01: { plate: "PO 1234A", model: "Volvo FH16", trailer_plate: "PO 5678T", status: "on_route", current_driver_id: "driver_01", odometer_km: 452300,
+      service: { tacho_calibration_due: "2027-03-15", inspection_due: "2026-10-02", trailer_inspection_due: "2026-11-20", ocp_policy_due: "2026-12-01" } },
+    truck_02: { plate: "PO 9911B", model: "Scania R450", trailer_plate: "PO 9912T", status: "idle", current_driver_id: "driver_02", odometer_km: 601200,
+      service: { tacho_calibration_due: "2026-09-20", inspection_due: "2027-05-01", trailer_inspection_due: "2027-02-14", ocp_policy_due: "2026-12-01" } },
+    truck_03: { plate: "PO 4477C", model: "MAN TGX", trailer_plate: "PO 4478T", status: "on_route", current_driver_id: "driver_03", odometer_km: 389750,
+      service: { tacho_calibration_due: "2027-01-11", inspection_due: "2027-04-18", trailer_inspection_due: "2026-09-30", ocp_policy_due: "2026-09-15" } },
+  },
+  drivers: {
+    driver_01: { name: "Jan Kowalski", phone: "+48600000000" },
+    driver_02: { name: "Adam Nowicki", phone: "+48600000001" },
+    driver_03: { name: "Piotr Zieliński", phone: "+48600000002" },
+  },
+  active_trips: {
+    trip_01: { truck_id: "truck_01", driver_id: "driver_01", route: { from: "Poznań, PL", to: "Lyon, FR" }, rate_eur: 1450, distance_km: 1380, status: "in_progress", started_at: Date.now() - 86400000, gps_last_position: { lat: 49.1, lng: 6.1 } },
+    trip_02: { truck_id: "truck_03", driver_id: "driver_03", route: { from: "Wrocław, PL", to: "Rotterdam, NL" }, rate_eur: 1680, distance_km: 1120, status: "in_progress", started_at: Date.now() - 43200000, gps_last_position: { lat: 52.3, lng: 9.8 } },
+  },
+  cmr_documents: {
+    cmr_01: { trip_id: "trip_00", truck_id: "truck_02", driver_id: "driver_02", storage_path: "cmr/trip_00/front.jpg", uploaded_at: Date.now() - 3600000, status: "pending_invoice", route_label: "Poznań → Hamburg" },
+    cmr_02: { trip_id: "trip_00b", truck_id: "truck_01", driver_id: "driver_01", storage_path: "cmr/trip_00b/front.jpg", uploaded_at: Date.now() - 7200000 * 3, status: "pending_invoice", route_label: "Poznań → Paryż" },
+  },
+  fleet_alerts: {}
+};
+
+// generuj alerty demo na podstawie dat serwisowych
+(function buildDemoAlerts(){
+  const now = new Date();
+  Object.entries(DEMO.trucks).forEach(([id, t]) => {
+    Object.entries(t.service).forEach(([key, dateStr]) => {
+      const due = new Date(dateStr);
+      const daysLeft = Math.ceil((due - now) / 86400000);
+      if (daysLeft <= 30) {
+        const labelMap = {
+          tacho_calibration_due: "Kalibracja tachografu",
+          inspection_due: "Przegląd techniczny ciągnika",
+          trailer_inspection_due: "Przegląd naczepy",
+          ocp_policy_due: "Odnowienie polisy OCP",
+        };
+        DEMO.fleet_alerts[`${id}_${key}`] = {
+          truck_id: id,
+          message: `${labelMap[key]} — ${t.plate}`,
+          due_date: dateStr,
+          severity: daysLeft <= 7 ? "high" : "medium",
+          days_left: daysLeft,
+        };
+      }
+    });
+  });
+})();
+
+/* =========================================================
+   STATE
+   ========================================================= */
+let STATE = {
+  trucks: {}, drivers: {}, active_trips: {}, cmr_documents: {}, fleet_alerts: {}
+};
+
+function loadData() {
+  if (firebaseReady) {
+    db.ref('/').on('value', (snap) => {
+      const val = snap.val() || {};
+      STATE.trucks = val.trucks || {};
+      STATE.drivers = val.drivers || {};
+      STATE.active_trips = val.active_trips || {};
+      STATE.cmr_documents = val.cmr_documents || {};
+      STATE.fleet_alerts = val.fleet_alerts || {};
+      renderAll();
+    }, (err) => {
+      console.error('Błąd odczytu Firebase, przełączam na dane demo.', err);
+      STATE = DEMO;
+      renderAll();
+    });
+  } else {
+    STATE = DEMO;
+    renderAll();
+  }
+}
+
+/* =========================================================
+   RENDER: KPI
+   ========================================================= */
+function renderKPIs() {
+  const activeCount = Object.values(STATE.active_trips || {}).filter(t => t.status === 'in_progress').length;
+  const alertCount = Object.keys(STATE.fleet_alerts || {}).length;
+  const cmrCount = Object.values(STATE.cmr_documents || {}).filter(c => c.status === 'pending_invoice').length;
+  document.getElementById('kpi-active').textContent = activeCount;
+  document.getElementById('kpi-alerts').textContent = alertCount;
+  document.getElementById('kpi-cmr').textContent = cmrCount;
+}
+
+/* =========================================================
+   RENDER: MAPA
+   ========================================================= */
+let map, markersLayer;
+function initMap() {
+  map = L.map('fleet-map', { zoomControl: true, attributionControl: false }).setView([50.5, 10.0], 5);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 18,
+  }).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+}
+
+function renderMap() {
+  markersLayer.clearLayers();
+  const bounds = [];
+  Object.entries(STATE.active_trips || {}).forEach(([tripId, trip]) => {
+    const pos = trip.gps_last_position;
+    if (!pos) return;
+    const truck = STATE.trucks?.[trip.truck_id] || {};
+    const driver = STATE.drivers?.[trip.driver_id] || {};
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:#FF5722;width:14px;height:14px;border-radius:2px;border:2px solid #09090b;transform:rotate(45deg);box-shadow:0 0 0 2px #FF5722aa;"></div>`,
+      iconSize: [14,14],
+    });
+    const marker = L.marker([pos.lat, pos.lng], { icon }).addTo(markersLayer);
+    marker.bindPopup(`
+      <div style="font-family:'Barlow Condensed';font-size:14px;color:#FF5722;">${truck.plate || trip.truck_id}</div>
+      <div>${driver.name || trip.driver_id}</div>
+      <div style="color:#9BA1A6;">${trip.route?.from || '?'} → ${trip.route?.to || '?'}</div>
+    `);
+    bounds.push([pos.lat, pos.lng]);
+  });
+  if (bounds.length) map.fitBounds(bounds, { padding: [40,40], maxZoom: 7 });
+  document.getElementById('map-updated').textContent = 'zaktualizowano ' + nowTimeStr();
+}
+
+/* =========================================================
+   RENDER: AKTYWNE TRASY
+   ========================================================= */
+function renderTrips() {
+  const el = document.getElementById('active-trips-list');
+  const trips = Object.entries(STATE.active_trips || {});
+  if (!trips.length) {
+    el.innerHTML = emptyState('Brak aktywnych tras', 'Trasy pojawią się tu, gdy kierowca odznaczy start w aplikacji mobilnej.');
+    return;
+  }
+  el.innerHTML = trips.map(([id, trip]) => {
+    const truck = STATE.trucks?.[trip.truck_id] || {};
+    const driver = STATE.drivers?.[trip.driver_id] || {};
+    const started = trip.started_at ? new Date(trip.started_at) : null;
+    const daysOnRoute = started ? Math.floor((Date.now() - started) / 86400000) : 0;
+    return `
+      <div class="px-4 py-3 flex items-center gap-4 hover:bg-panel2/60 transition-colors">
+        <div class="w-2 h-2 rounded-full bg-ok pulse-ok flex-shrink-0"></div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-baseline gap-2">
+            <span class="font-mono text-sm text-zinc-100">${truck.plate || '—'}</span>
+            <span class="text-xs text-muted">${driver.name || '—'}</span>
+          </div>
+          <div class="text-xs text-muted truncate">${trip.route?.from || '?'} → ${trip.route?.to || '?'}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="font-mono text-sm text-gold">${trip.rate_eur ? trip.rate_eur + ' €' : '—'}</div>
+          <div class="text-[11px] text-muted">${daysOnRoute} dzień w trasie</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* =========================================================
+   RENDER: ALERTY
+   ========================================================= */
+function renderAlerts() {
+  const el = document.getElementById('alerts-list');
+  const alerts = Object.entries(STATE.fleet_alerts || {}).sort((a,b) => (a[1].days_left ?? 999) - (b[1].days_left ?? 999));
+  if (!alerts.length) {
+    el.innerHTML = emptyState('Brak alertów', 'Wszystkie terminy serwisowe są aktualne.');
+    return;
+  }
+  el.innerHTML = alerts.map(([id, alert]) => {
+    const truck = STATE.trucks?.[alert.truck_id] || {};
+    const isCrit = alert.severity === 'high';
+    return `
+      <div class="px-4 py-3 flex items-start gap-3">
+        <div class="w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0 ${isCrit ? 'bg-crit' : 'bg-gold'}"></div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-zinc-200">${alert.message || truck.plate}</div>
+          <div class="text-[11px] font-mono ${isCrit ? 'text-crit' : 'text-gold'} mt-0.5">
+            ${alert.days_left != null ? (alert.days_left <= 0 ? 'PRZETERMINOWANE' : alert.days_left + ' dni pozostało') : alert.due_date}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* =========================================================
+   RENDER: KOLEJKA CMR
+   ========================================================= */
+function renderCMRQueue() {
+  const el = document.getElementById('cmr-queue');
+  const docs = Object.entries(STATE.cmr_documents || {}).filter(([id, c]) => c.status === 'pending_invoice')
+    .sort((a,b) => (b[1].uploaded_at||0) - (a[1].uploaded_at||0));
+  if (!docs.length) {
+    el.innerHTML = emptyState('Kolejka pusta', 'Zdjęcia CMR od kierowców pojawią się tu natychmiast po uploadzie.');
+    return;
+  }
+  el.innerHTML = docs.map(([id, doc]) => {
+    const truck = STATE.trucks?.[doc.truck_id] || {};
+    const driver = STATE.drivers?.[doc.driver_id] || {};
+    const hoursAgo = doc.uploaded_at ? Math.floor((Date.now() - doc.uploaded_at) / 3600000) : null;
+    return `
+      <div class="px-4 py-3 flex items-center gap-3">
+        <div class="w-10 h-10 bg-panel2 border border-borderlt flex items-center justify-center flex-shrink-0 text-accent text-[10px] font-mono">CMR</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-zinc-200 truncate">${doc.route_label || truck.plate || '—'}</div>
+          <div class="text-[11px] text-muted">${driver.name || doc.driver_id || '—'} · ${hoursAgo != null ? hoursAgo + 'h temu' : '—'}</div>
+        </div>
+        <button data-cmr-id="${id}" class="mark-invoiced-btn text-[11px] font-mono text-accent border border-accent/40 px-2 py-1 hover:bg-accent/10 transition-colors flex-shrink-0">
+          Oznacz jako zafakturowane
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  el.querySelectorAll('.mark-invoiced-btn').forEach(btn => {
+    btn.addEventListener('click', () => markInvoiced(btn.dataset.cmrId));
+  });
+}
+
+function markInvoiced(cmrId) {
+  if (firebaseReady) {
+    db.ref(`/cmr_documents/${cmrId}/status`).set('invoiced');
+  } else {
+    if (DEMO.cmr_documents[cmrId]) {
+      DEMO.cmr_documents[cmrId].status = 'invoiced';
+      STATE = DEMO;
+      renderAll();
+    }
+  }
+}
+
+/* =========================================================
+   RENDER: TABELA FLOTY
+   ========================================================= */
+function renderFleetTable() {
+  const el = document.getElementById('fleet-table-body');
+  const trucks = Object.entries(STATE.trucks || {});
+  if (!trucks.length) {
+    el.innerHTML = `<tr><td colspan="7" class="px-4 py-6 text-center text-muted font-body">Brak pojazdów w bazie.</td></tr>`;
+    return;
+  }
+  el.innerHTML = trucks.map(([id, t]) => {
+    const driver = STATE.drivers?.[t.current_driver_id];
+    const statusMap = { on_route: ['W trasie','text-ok'], idle: ['Postój','text-muted'], service: ['Serwis','text-gold'] };
+    const [statusLabel, statusClass] = statusMap[t.status] || ['—','text-muted'];
+    const fmtDate = (d) => d ? dateColor(d) : '<span class="text-muted">—</span>';
+    return `
+      <tr>
+        <td class="px-4 py-2.5 text-zinc-200">${t.model || '—'}</td>
+        <td class="px-4 py-2.5 text-zinc-100">${t.plate || '—'}</td>
+        <td class="px-4 py-2.5 text-zinc-300 font-body">${driver?.name || '—'}</td>
+        <td class="px-4 py-2.5 ${statusClass} font-body">${statusLabel}</td>
+        <td class="px-4 py-2.5">${fmtDate(t.service?.inspection_due)}</td>
+        <td class="px-4 py-2.5">${fmtDate(t.service?.tacho_calibration_due)}</td>
+        <td class="px-4 py-2.5">${fmtDate(t.service?.ocp_policy_due)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function dateColor(dateStr) {
+  const daysLeft = Math.ceil((new Date(dateStr) - new Date()) / 86400000);
+  const cls = daysLeft <= 7 ? 'text-crit' : daysLeft <= 30 ? 'text-gold' : 'text-zinc-400';
+  return `<span class="${cls}">${dateStr}</span>`;
+}
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+function emptyState(title, sub) {
+  return `<div class="px-4 py-8 text-center">
+    <div class="text-sm text-zinc-400">${title}</div>
+    <div class="text-xs text-muted mt-1">${sub}</div>
+  </div>`;
+}
+
+function nowTimeStr() {
+  return new Date().toLocaleTimeString('pl-PL');
+}
+
+function renderAll() {
+  renderKPIs();
+  renderTrips();
+  renderAlerts();
+  renderCMRQueue();
+  renderFleetTable();
+  if (map) renderMap();
+}
+
+/* =========================================================
+   KALKULATOR MARŻY
+   ========================================================= */
+function runCalc() {
+  const rate = parseFloat(document.getElementById('calc-rate').value) || 0;
+  const km = parseFloat(document.getElementById('calc-km').value) || 0;
+  const consumption = parseFloat(document.getElementById('calc-consumption').value) || 0;
+  const fuelPrice = parseFloat(document.getElementById('calc-fuel-price').value) || 0;
+  const tollDe = parseFloat(document.getElementById('calc-toll-de').value) || 0;
+  const tollFr = parseFloat(document.getElementById('calc-toll-fr').value) || 0;
+  const driverCost = parseFloat(document.getElementById('calc-driver-cost').value) || 0;
+  const fx = parseFloat(document.getElementById('calc-fx').value) || 0;
+
+  const fuelCost = (km / 100) * consumption * fuelPrice;
+  const tollCost = tollDe + tollFr;
+  const totalCost = fuelCost + tollCost + driverCost;
+  const profitEur = rate - totalCost;
+  const profitPln = profitEur * fx;
+  const perKm = km ? (totalCost / km) : 0;
+
+  document.getElementById('r-rate').textContent = fmtEur(rate);
+  document.getElementById('r-fuel').textContent = '−' + fmtEur(fuelCost);
+  document.getElementById('r-toll').textContent = '−' + fmtEur(tollCost);
+  document.getElementById('r-driver').textContent = '−' + fmtEur(driverCost);
+  document.getElementById('r-perkm').textContent = fmtEur(perKm) + ' / km';
+  document.getElementById('r-profit-eur').textContent = fmtEur(profitEur);
+  document.getElementById('r-profit-pln').textContent = profitPln.toLocaleString('pl-PL', { maximumFractionDigits: 0 }) + ' zł';
+
+  const profitColorEls = [document.getElementById('r-profit-eur'), document.getElementById('r-profit-pln')];
+  profitColorEls.forEach(elx => {
+    elx.classList.remove('text-ok','text-crit','text-gold');
+    if (profitEur < 0) elx.classList.add('text-crit');
+    else if (profitEur < 150) elx.classList.add('text-gold');
+    else elx.classList.add('text-ok');
+  });
+}
+
+function fmtEur(n) {
+  return n.toLocaleString('pl-PL', { maximumFractionDigits: 0 }) + ' €';
+}
+
+['calc-rate','calc-km','calc-consumption','calc-fuel-price','calc-toll-de','calc-toll-fr','calc-driver-cost','calc-fx'].forEach(id => {
+  document.getElementById(id).addEventListener('input', runCalc);
+});
+
+/* =========================================================
+   NAWIGACJA ZAKŁADEK
+   ========================================================= */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.dataset.active = 'false');
+    btn.dataset.active = 'true';
+    document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+    document.getElementById('view-' + btn.dataset.tab).classList.remove('hidden');
+    if (btn.dataset.tab === 'dashboard' && map) {
+      setTimeout(() => map.invalidateSize(), 50);
+    }
+  });
+});
+
+/* =========================================================
+   ZEGAR
+   ========================================================= */
+function tickClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('pl-PL') + ' · ' + now.toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+setInterval(tickClock, 1000);
+tickClock();
+
+/* =========================================================
+   INIT
+   ========================================================= */
+initMap();
+runCalc();
+loadData();
+</script>
+</body>
+</html>
